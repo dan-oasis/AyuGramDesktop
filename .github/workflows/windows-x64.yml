@@ -63,12 +63,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Ninja not available.' }
 
       - name: Restore dependency cache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: |
             TBuild/Libraries/win64
             TBuild/ThirdParty
-          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}
+          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-${{ github.run_id }}
+          restore-keys: |
+            windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-
 
       - name: Prepare Debug libraries
         shell: cmd
@@ -128,3 +130,12 @@ jobs:
           path: artifact/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Preserve completed dependency stages
+        if: always()
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: |
+            TBuild/Libraries/win64
+            TBuild/ThirdParty
+          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-${{ github.run_id }}
