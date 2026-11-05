@@ -1,9 +1,9 @@
-name: AyuGram Windows x64
+name: Superseded Windows build
 
 on:
   push:
     branches:
-      - 'codex/windows-x64-*'
+      - codex/windows-x64-fix-admin-rights
   workflow_dispatch:
 
 permissions:
@@ -14,149 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: windows-2025
-    timeout-minutes: 360
-    defaults:
-      run:
-        shell: pwsh
-    env:
-      BUILD_ROOT: ${{ github.workspace }}\TBuild
-
+  superseded:
+    name: Superseded — build runs in PR 1
+    runs-on: ubuntu-latest
     steps:
-      - name: Check out source and pinned submodules
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          path: TBuild/tdesktop
-          submodules: recursive
-          persist-credentials: false
-
-      - name: Apply AyuGram changes to updated libraries
-        working-directory: TBuild/tdesktop
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $modules = @{
-            lib_ui = 'c3f7343fdf16d212fcb31962bf267970481e00fc'
-            codegen = 'dbd1d53137cd581cfdbeebe93bcaf54abf55ec74'
-          }
-          foreach ($name in $modules.Keys) {
-            $directory = "Telegram/$name"
-            $actual = & git -C $directory rev-parse HEAD
-            if ($LASTEXITCODE -ne 0 -or $actual -ne $modules[$name]) {
-              throw "Unexpected $name source revision."
-            }
-            $patch = Join-Path $PWD "build/personal/$name.patch"
-            & git -C $directory apply --check $patch
-            if ($LASTEXITCODE -ne 0) { throw "Cannot apply $name patch." }
-            & git -C $directory apply $patch
-            if ($LASTEXITCODE -ne 0) { throw "Cannot apply $name patch." }
-          }
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.10'
-
-      - name: Set up MSVC x64 and Windows SDK
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          if (-not $vs) { throw 'Visual Studio C++ Build Tools not found.' }
-          $vcvars = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
-          $command = '"' + $vcvars + '" -vcvars_ver=14.44 10.0.26100.0 >nul && set'
-          $environmentLines = & cmd.exe /d /s /c $command
-          if ($LASTEXITCODE -ne 0) { throw 'Required MSVC 14.44 or Windows SDK 10.0.26100.0 is unavailable.' }
-          foreach ($line in $environmentLines) {
-            if ($line -match '^([^=][^=]*)=(.*)$') {
-              $key = $Matches[1]
-              $value = $Matches[2]
-              [Environment]::SetEnvironmentVariable($key, $value, 'Process')
-              if ($key -notmatch '^(GITHUB_|RUNNER_|NODE_OPTIONS$)') {
-                "$key=$value" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-              }
-            }
-          }
-          New-Item -ItemType Directory -Force "$env:BUILD_ROOT\Libraries\win64", "$env:BUILD_ROOT\ThirdParty" | Out-Null
-          cmake --version
-          if ($LASTEXITCODE -ne 0) { throw 'CMake not available.' }
-          ninja --version
-          if ($LASTEXITCODE -ne 0) { throw 'Ninja not available.' }
-
-      - name: Restore dependency cache
-        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809
-        with:
-          path: |
-            TBuild/Libraries/win64
-            TBuild/ThirdParty
-          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-${{ github.run_id }}
-          restore-keys: |
-            windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-
-
-      - name: Prepare Debug libraries
-        shell: cmd
-        run: |
-          call "%BUILD_ROOT%\tdesktop\Telegram\build\prepare\win.bat" skip-release qt6
-          if errorlevel 1 exit /b 1
-
-      - name: Configure personal Debug build
-        shell: cmd
-        working-directory: TBuild/tdesktop/Telegram
-        run: |
-          call configure.bat -G "Ninja Multi-Config" qt6 ^
-            -D TDESKTOP_API_ID=2040 ^
-            -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 ^
-            -D CMAKE_CONFIGURATION_TYPES=Debug ^
-            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
-            -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
-          if errorlevel 1 exit /b 1
-
-      - name: Compile Windows executables
-        shell: cmd
-        working-directory: TBuild/tdesktop
-        run: |
-          cmake --build out --config Debug --parallel 2 -- -k 0
-          if errorlevel 1 exit /b 1
-
-      - name: Collect binaries and source identity
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $source = Join-Path $env:BUILD_ROOT 'tdesktop'
-          $output = Join-Path $source 'out\Debug'
-          $exe = Join-Path $output 'AyuGram.exe'
-          if (-not (Test-Path $exe)) { throw 'Build did not produce AyuGram.exe.' }
-          New-Item -ItemType Directory -Force artifact | Out-Null
-          Copy-Item $exe artifact
-          Get-ChildItem $output -Filter '*.dll' -File | Copy-Item -Destination artifact
-          $identity = @{
-            repository = $env:GITHUB_REPOSITORY
-            ref = $env:GITHUB_REF
-            commit = $env:GITHUB_SHA
-            workflow_run = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
-            configuration = 'Debug'
-            architecture = 'x64'
-            runtime_tested = $false
-            submodules = @(& git -C $source submodule status --recursive)
-          }
-          $identity | ConvertTo-Json -Depth 4 | Set-Content artifact/build-info.json -Encoding utf8
-          Get-ChildItem artifact -File | ForEach-Object {
-            $digest = Get-FileHash $_.FullName -Algorithm SHA256
-            "$($digest.Hash.ToLowerInvariant())  $($_.Name)"
-          } | Set-Content artifact/SHA256SUMS.txt -Encoding ascii
-
-      - name: Upload Windows build
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: AyuGram-Windows-x64-Debug-${{ github.run_number }}
-          path: artifact/
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Preserve completed dependency stages
-        if: always()
-        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809
-        with:
-          path: |
-            TBuild/Libraries/win64
-            TBuild/ThirdParty
-          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-${{ github.run_id }}
+      - name: Show current build
+        run: echo 'The Windows build now runs as the check on https://github.com/dan-oasis/AyuGramDesktop/pull/1. This workflow does not produce an executable.'
