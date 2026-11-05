@@ -169,7 +169,7 @@ void FillDonateInfoBox(not_null<Ui::GenericBox*> box, not_null<Window::SessionCo
 	const auto tonSymbol = emojiHelper.paletteDependent({
 		.factory = [=]
 		{
-			return Ui::Earn::IconCurrencyColored(
+			return Ui::Earn::IconCurrencyTwoTone(
 				st::boxDividerLabel.style.font,
 				st::boxDividerLabel.textFg->c);
 		},
@@ -248,3 +248,4 @@ void FillDonateInfoBox(not_null<Ui::GenericBox*> box, not_null<Window::SessionCo
 }
 
 } // namespace Ui
+

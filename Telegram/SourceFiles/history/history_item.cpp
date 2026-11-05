@@ -2873,9 +2873,9 @@ void HistoryItem::applySentMessage(const MTPDmessage &data) {
 		_flags &= ~MessageFlag::InvertMedia;
 	}
 	if (data.is_noforwards()) {
-		_flags |= MessageFlag::NoForwards;
+		_flags |= MessageFlag::AyuNoForwards;
 	} else {
-		_flags &= ~MessageFlag::NoForwards;
+		_flags &= ~MessageFlag::AyuNoForwards;
 	}
 
 	const auto wasTypes = sharedMediaTypes();
@@ -9449,3 +9449,4 @@ void HistoryItem::overrideMedia(std::unique_ptr<Data::Media> media) {
 void HistoryItem::removeTranslationBit() {
 	RemoveComponents(HistoryMessageTranslation::Bit());
 }
+

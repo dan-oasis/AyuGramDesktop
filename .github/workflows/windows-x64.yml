@@ -84,16 +84,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Ninja not available.' }
 
       - name: Restore dependency cache
+        id: deps_cache
         uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: |
             TBuild/Libraries/win64
             TBuild/ThirdParty
-          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-${{ github.run_id }}
+          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-complete-v2
           restore-keys: |
-            windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-
+            windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-42062979528
+            windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-42030330345
 
       - name: Prepare Debug libraries
+        id: prepare_libraries
         shell: cmd
         run: |
           call "%BUILD_ROOT%\tdesktop\Telegram\build\prepare\win.bat" skip-release qt6
@@ -153,10 +156,11 @@ jobs:
           retention-days: 14
 
       - name: Preserve completed dependency stages
-        if: always()
+        if: ${{ always() && !cancelled() && steps.prepare_libraries.outcome == 'success' && steps.deps_cache.outputs['cache-hit'] != 'true' }}
         uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: |
             TBuild/Libraries/win64
             TBuild/ThirdParty
-          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-${{ github.run_id }}
+          key: windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-complete-v2
+
