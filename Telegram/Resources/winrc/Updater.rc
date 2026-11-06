@@ -51,11 +51,11 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "Radolyn Labs"
-            VALUE "FileDescription", "AyuGram Desktop Updater"
+            VALUE "CompanyName", "mTelegram"
+            VALUE "FileDescription", "mTelegram Updater"
             VALUE "FileVersion", "7.3.5.0"
             VALUE "LegalCopyright", "Copyright (C) 2014-2026"
-            VALUE "ProductName", "AyuGram Desktop"
+            VALUE "ProductName", "mTelegram"
             VALUE "ProductVersion", "7.3.5.0"
         END
     END

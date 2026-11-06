@@ -1,4 +1,4 @@
-name: AyuGram Windows x64
+name: mTelegram Windows x64
 
 on:
   pull_request:
@@ -126,8 +126,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $source = Join-Path $env:BUILD_ROOT 'tdesktop'
           $output = Join-Path $source 'out\Debug'
-          $exe = Join-Path $output 'AyuGram.exe'
-          if (-not (Test-Path $exe)) { throw 'Build did not produce AyuGram.exe.' }
+          $exe = Join-Path $output 'mTelegram.exe'
+          if (-not (Test-Path $exe)) { throw 'Build did not produce mTelegram.exe.' }
           New-Item -ItemType Directory -Force artifact | Out-Null
           Copy-Item $exe artifact
           Get-ChildItem $output -Filter '*.dll' -File | Copy-Item -Destination artifact
@@ -150,7 +150,7 @@ jobs:
       - name: Upload Windows build
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: AyuGram-Windows-x64-Debug-${{ github.run_number }}
+          name: mTelegram-Windows-x64-Debug-${{ github.run_number }}
           path: artifact/
           if-no-files-found: error
           retention-days: 14

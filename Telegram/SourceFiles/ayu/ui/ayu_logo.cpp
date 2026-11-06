@@ -21,7 +21,7 @@ namespace AyuAssets {
 QString appIcoPath() {
 	const auto &settings = AyuSettings::getInstance();
 	return cWorkingDir()
-		+ u"tdata/AyuGram-"_q
+		+ u"tdata/mTelegram-"_q
 		+ settings.appIcon()
 		+ u".ico"_q;
 }
@@ -42,7 +42,9 @@ void loadAppIco() {
 QImage CreateImage(const QString &name, const QSize resultImageSize, const int padding = 0) {
 	const auto iconSize = resultImageSize.shrunkBy(QMargins(padding, padding, padding, padding));
 
-	const auto pngPath = qsl(":/gui/art/ayu/%1/app.png").arg(name);
+	const auto pngPath = (name == DEFAULT_ICON)
+		? qsl(":/gui/art/icon256.png")
+		: qsl(":/gui/art/ayu/%1/app.png").arg(name);
 	if (QFile::exists(pngPath)) {
 		const auto loaded = QImage(pngPath).scaled(iconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 		auto res = QImage(
