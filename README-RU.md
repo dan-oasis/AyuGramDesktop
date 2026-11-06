@@ -1,154 +1,30 @@
-# AyuGram
+# mTelegram
 
-![AyuGram Лого](.github/AyuGram.png) ![AyuChan](.github/AyuChan.png)
+Экспериментальный клиент Telegram на основе Telegram Desktop и изменений AyuGram. Основное название приложения — **mTelegram**, стандартная иконка — Telegram.
 
-[ [English](README.md)  | Русский ]
+## Скачать
 
-## Функции и Фишки
+| Платформа | Состояние | Ссылка |
+| --- | --- | --- |
+| Windows x64, mTelegram | Тестовая Debug-сборка переименованной версии; результат см. в Actions | [Сборка mTelegram](https://github.com/dan-oasis/AyuGramDesktop/actions/runs/42260195993) |
+| Windows x64, предыдущее имя AyuGram | Успешно собрано; работа приложения ещё не тестировалась | [ZIP тестовой сборки](https://github.com/dan-oasis/AyuGramDesktop/actions/runs/42224567308/artifacts/13514085558) |
+| Android | Планируется; исходники Android и APK в этот проект пока не добавлены | Готовой версии нет |
 
-- Полный режим призрака (настраиваемый)
-- История удалений и изменений сообщений
-- Кастомизация шрифта
-- Режим Стримера
-- Локальный телеграм премиум
-- Переводчик
-- Превью медиа и быстрая реакция при сильном нажатии на тачпад (macOS)
-- Улучшенный вид
+На странице успешной сборки скачайте ZIP в разделе **Artifacts**, распакуйте целиком и запустите EXE. Для скачивания Actions-артефактов обычно нужен вход в GitHub; срок их хранения — 14 дней.
 
-И многое другое. Посмотрите нашу [Документацию](https://docs.ayugram.one/desktop/) для более подробной информации.
+Постоянные публичные загрузки Windows ZIP и Android APK предполагается публиковать в [Releases](../../releases). Релиз mTelegram пока не опубликован. **Code → Download ZIP скачивает исходники, а не готовое приложение.**
 
-<h3>
-  <details>
-    <summary>Превью</summary>
-    <table>
-      <tr>
-        <td><img src='.github/demos/demo1.png' width='268' alt='Preferences'></td>
-        <td><img src='.github/demos/demo2.png' width='268' alt='AyuGram Options'></td>
-        <td><img src='.github/demos/demo3.png' width='268' alt='Message Filters'></td>
-      </tr>
-      <tr>
-        <td><img src='.github/demos/demo4.png' width='268' alt='Appearance'></td>
-        <td><img src='.github/demos/demo5.png' width='268' alt='Chats'></td>
-      </tr>
-    </table>
-  </details>
-</h3>
+## Статус и исходники
 
-## Установка
+- Основа десктопного переноса: Telegram Desktop **7.3.5**.
+- Последний коммит кода и брендинга перед этой документацией: `8144d01fa29ea1f5414c5f33b40ddd6221089af6`.
+- Успешно собранный предыдущий коммит: `1384e1162c7eb9df57c923ea7639cd5ab98b62eb`.
+- Проверка всех функций AyuGram и запуск на Windows ещё не выполнены.
+- Android — отдельная кодовая база; десктопные исходники не превращаются автоматически в APK.
+- Сейчас эта ветка оформляет проект; существующие ветки сборки сохранены.
 
-### Windows
+[Техническая передача проекта](mTelegram-handoff.txt) · [План организации](PROJECT-STATUS.md) · [Информация исходного AyuGram](UPSTREAM-README.md)
 
-#### Официальная версия
+## Авторы и лицензии
 
-Вы можете скачать готовый бинарный файл со вкладки [Releases](https://github.com/AyuGram/AyuGramDesktop/releases) или из
-[Телеграм канала](https://t.me/AyuGramReleases).
-
-#### Winget
-
-```bash
-winget install RadolynLabs.AyuGramDesktop
-```
-
-#### Scoop
-
-```bash
-scoop bucket add extras
-scoop install ayugram
-```
-
-#### Сборка вручную
-
-Следуйте [официальному руководству](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-win-x64.md), если
-вы хотите собрать AyuGram сами.
-
-### macOS
-
-#### Официальная версия
-
-Вы можете скачать подписанный пакет со вкладки [Releases](https://github.com/AyuGram/AyuGramDesktop/releases).
-
-#### Homebrew
-
-```bash
-brew install --cask ayugram
-```
-
-### Arch Linux
-
-#### Из исходников (рекомендованный способ)
-
-Установите `ayugram-desktop` из [AUR](https://aur.archlinux.org/packages/ayugram-desktop).
-
-#### Готовые бинарники
-
-Установите `ayugram-desktop-bin` из [AUR](https://aur.archlinux.org/packages/ayugram-desktop-bin).
-
-Примечание: данный пакет собирается не нами.
-
-### NixOS
-
-#### Флейк (рекомендуется)
-
-Установите `ayugram-desktop` из [ndfined-crp/ayugram-desktop](https://github.com/ndfined-crp/ayugram-desktop)
-
-#### Nixpkgs
-
-Установите `ayugram-desktop` из [nixpkgs](https://search.nixos.org/packages?channel=unstable&show=ayugram-desktop)
-
-### ALT Linux
-
-[Sisyphus](https://packages.altlinux.org/en/sisyphus/srpms/ayugram-desktop/)
-
-### Gentoo Linux
-
-Инструкцию по установке можно найти в [этом репозитории](https://codeberg.org/OverLessArtem/ayugram-ebuild-gentoo).
-
-### Void Linux
-Инструкцию по установке можно найти в [этом репозитории](https://codeberg.org/OverLessArtem/ayugram-template-void)
-
-### EPM
-
-`epm play ayugram`
-
-### Fedora
-
-Из репозитория [RPM Fusion](https://admin.rpmfusion.org/pkgdb/package/free/ayugram-desktop/).
-
-```bash
-dnf install ayugram-desktop
-```
-
-### Любой другой Линукс дистрибутив
-
-Flatpak: https://github.com/0FL01/AyuGramDesktop-flatpak
-
-Или следуйте [официальному руководству](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-linux.md).
-
-## Пожертвования
-
-Вам нравится использовать **AyuGram**? Оставьте нам чаевые!
-
-[Здесь доступные варианты.](https://docs.ayugram.one/donate/)
-
-## Использованные материалы
-
-### Телеграм клиенты
-
-- [Telegram Desktop](https://github.com/telegramdesktop/tdesktop)
-- [Kotatogram](https://github.com/kotatogram/kotatogram-desktop)
-- [64Gram](https://github.com/TDesktop-x64/tdesktop)
-- [Forkgram](https://github.com/forkgram/tdesktop)
-
-### Использованные библиотеки
-
-- [JSON for Modern C++](https://github.com/nlohmann/json)
-- [SQLite](https://github.com/sqlite/sqlite)
-- [sqlite_orm](https://github.com/fnc12/sqlite_orm)
-
-### Иконки
-
-- [Solar Icon Set](https://www.figma.com/community/file/1166831539721848736)
-
-### Боты
-
-- [TelegramDB](https://t.me/tgdatabase) для получения юзернейма по ID (до закрытия бесплатной версии 2 апреля 2026)
+Проект основан на [Telegram Desktop](https://github.com/telegramdesktop/tdesktop) и [AyuGram Desktop](https://github.com/AyuGram/AyuGramDesktop). Это самостоятельная экспериментальная сборка, не официальный релиз этих проектов. Сохранены исходные уведомления об авторах и лицензиях: [LICENSE](LICENSE), [LEGAL](LEGAL).

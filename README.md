@@ -1,156 +1,30 @@
-# AyuGram
+# mTelegram
 
-![AyuGram Logo](.github/AyuGram.png) ![AyuChan](.github/AyuChan.png)
+Экспериментальный клиент Telegram на основе Telegram Desktop и изменений AyuGram. Основное название приложения — **mTelegram**, стандартная иконка — Telegram.
 
-[ English  |   [Русский](README-RU.md) ]
+## Скачать
 
-## Features
+| Платформа | Состояние | Ссылка |
+| --- | --- | --- |
+| Windows x64, mTelegram | Тестовая Debug-сборка переименованной версии; результат см. в Actions | [Сборка mTelegram](https://github.com/dan-oasis/AyuGramDesktop/actions/runs/42260195993) |
+| Windows x64, предыдущее имя AyuGram | Успешно собрано; работа приложения ещё не тестировалась | [ZIP тестовой сборки](https://github.com/dan-oasis/AyuGramDesktop/actions/runs/42224567308/artifacts/13514085558) |
+| Android | Планируется; исходники Android и APK в этот проект пока не добавлены | Готовой версии нет |
 
-- Full ghost mode (flexible)
-- Messages history
-- Anti-recall
-- Font customization
-- Streamer mode
-- Local Telegram Premium
-- Translator
-- Media preview & quick reaction on force click (macOS)
-- Enhanced appearance
+На странице успешной сборки скачайте ZIP в разделе **Artifacts**, распакуйте целиком и запустите EXE. Для скачивания Actions-артефактов обычно нужен вход в GitHub; срок их хранения — 14 дней.
 
-And many more. Check out our [Documentation](https://docs.ayugram.one/desktop/).
+Постоянные публичные загрузки Windows ZIP и Android APK предполагается публиковать в [Releases](../../releases). Релиз mTelegram пока не опубликован. **Code → Download ZIP скачивает исходники, а не готовое приложение.**
 
-<h3>
-  <details>
-    <summary>Preview</summary>
-    <table>
-      <tr>
-        <td><img src='.github/demos/demo1.png' width='268' alt='Preferences'></td>
-        <td><img src='.github/demos/demo2.png' width='268' alt='AyuGram Options'></td>
-        <td><img src='.github/demos/demo3.png' width='268' alt='Message Filters'></td>
-      </tr>
-      <tr>
-        <td><img src='.github/demos/demo4.png' width='268' alt='Appearance'></td>
-        <td><img src='.github/demos/demo5.png' width='268' alt='Chats'></td>
-      </tr>
-    </table>
-  </details>
-</h3>
+## Статус и исходники
 
-## Downloads
+- Основа десктопного переноса: Telegram Desktop **7.3.5**.
+- Последний коммит кода и брендинга перед этой документацией: `8144d01fa29ea1f5414c5f33b40ddd6221089af6`.
+- Успешно собранный предыдущий коммит: `1384e1162c7eb9df57c923ea7639cd5ab98b62eb`.
+- Проверка всех функций AyuGram и запуск на Windows ещё не выполнены.
+- Android — отдельная кодовая база; десктопные исходники не превращаются автоматически в APK.
+- Сейчас эта ветка оформляет проект; существующие ветки сборки сохранены.
 
-### Windows
+[Техническая передача проекта](mTelegram-handoff.txt) · [План организации](PROJECT-STATUS.md) · [Информация исходного AyuGram](UPSTREAM-README.md)
 
-#### Official
+## Авторы и лицензии
 
-You can download prebuilt Windows binary from [Releases tab](https://github.com/AyuGram/AyuGramDesktop/releases) or from
-the [Telegram channel](https://t.me/AyuGramReleases).
-
-#### Winget
-
-```bash
-winget install RadolynLabs.AyuGramDesktop
-```
-
-#### Scoop
-
-```bash
-scoop bucket add extras
-scoop install ayugram
-```
-
-#### Self-built
-
-Follow [official guide](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-win-x64.md) if you want to
-build by yourself.
-
-### macOS
-
-#### Official
-
-You can download prebuilt macOS package from [Releases tab](https://github.com/AyuGram/AyuGramDesktop/releases).
-
-#### Homebrew
-
-```bash
-brew install --cask ayugram
-```
-
-### Arch Linux
-
-#### From source (recommended)
-
-Install `ayugram-desktop` from [AUR](https://aur.archlinux.org/packages/ayugram-desktop).
-
-#### Prebuilt binaries
-
-Install `ayugram-desktop-bin` from [AUR](https://aur.archlinux.org/packages/ayugram-desktop-bin).
-
-Note: these binaries aren't officially maintained by us.
-
-### NixOS
-
-#### Flake (recommended)
-
-Install `ayugram-desktop` from [ndfined-crp/ayugram-desktop](https://github.com/ndfined-crp/ayugram-desktop)
-
-#### Nixpkgs
-
-Install `ayugram-desktop` from [nixpkgs](https://search.nixos.org/packages?channel=unstable&show=ayugram-desktop)
-
-### ALT Linux
-
-[Sisyphus](https://packages.altlinux.org/en/sisyphus/srpms/ayugram-desktop/)
-
-### Gentoo Linux
-
-See [this repository](https://codeberg.org/OverLessArtem/ayugram-ebuild-gentoo) for installation manual.
-
-### Void Linux
-See [this repository](https://codeberg.org/OverLessArtem/ayugram-template-void) for installation manual.
-
-### EPM
-
-`epm play ayugram`
-
-### Fedora
-
-From [RPM Fusion](https://admin.rpmfusion.org/pkgdb/package/free/ayugram-desktop/) repository.
-
-```bash
-dnf install ayugram-desktop
-```
-
-### Any other Linux distro
-
-Flatpak: https://github.com/0FL01/AyuGramDesktop-flatpak
-
-Or follow the [official guide](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-linux.md).
-
-## Donation
-
-Enjoy using **AyuGram**? Consider sending us a tip!
-
-[Here's available methods.](https://docs.ayugram.one/donate/)
-
-## Credits
-
-### Telegram clients
-
-- [Telegram Desktop](https://github.com/telegramdesktop/tdesktop)
-- [Kotatogram](https://github.com/kotatogram/kotatogram-desktop)
-- [64Gram](https://github.com/TDesktop-x64/tdesktop)
-- [Forkgram](https://github.com/forkgram/tdesktop)
-
-### Libraries used
-
-- [JSON for Modern C++](https://github.com/nlohmann/json)
-- [SQLite](https://github.com/sqlite/sqlite)
-- [sqlite_orm](https://github.com/fnc12/sqlite_orm)
-- [androidx sources](https://github.com/androidx/androidx)
-
-### Icons
-
-- [Solar Icon Set](https://www.figma.com/community/file/1166831539721848736)
-
-### Bots
-
-- [TelegramDB](https://t.me/tgdatabase) for username lookup by ID (until closing free inline mode at 2 April 2026)
+Проект основан на [Telegram Desktop](https://github.com/telegramdesktop/tdesktop) и [AyuGram Desktop](https://github.com/AyuGram/AyuGramDesktop). Это самостоятельная экспериментальная сборка, не официальный релиз этих проектов. Сохранены исходные уведомления об авторах и лицензиях: [LICENSE](LICENSE), [LEGAL](LEGAL).
