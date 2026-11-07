@@ -117,7 +117,22 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Could not fetch Qt WebSockets' }
             New-Item -ItemType Directory -Force $build | Out-Null
             Set-Location $build
-            & (Join-Path $prefix 'bin\qt-configure-module.bat') $module -cmake-generator Ninja -- -DCMAKE_BUILD_TYPE=Debug -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF
+            $libraries = Split-Path -Parent $prefix
+            $zlib = Join-Path $libraries 'zlib'
+            $openssl = Join-Path $libraries 'openssl3'
+            $configureArgs = @(
+              $module, '-cmake-generator', 'Ninja', '--'
+              '-DCMAKE_BUILD_TYPE=Debug'
+              '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug'
+              '-DQT_BUILD_TESTS=OFF'
+              '-DQT_BUILD_EXAMPLES=OFF'
+              "-DZLIB_INCLUDE_DIR=$zlib"
+              "-DZLIB_LIBRARY_DEBUG=$zlib/Debug/zlibstaticd.lib"
+              "-DOPENSSL_INCLUDE_DIR=$openssl/include"
+              "-DLIB_EAY_DEBUG=$openssl/out.dbg/libcrypto.lib"
+              "-DSSL_EAY_DEBUG=$openssl/out.dbg/libssl.lib"
+            )
+            & (Join-Path $prefix 'bin\qt-configure-module.bat') @configureArgs
             if ($LASTEXITCODE -ne 0) { throw 'Could not configure Qt WebSockets' }
             cmake --build . --parallel 2
             if ($LASTEXITCODE -ne 0) { throw 'Could not compile Qt WebSockets' }
