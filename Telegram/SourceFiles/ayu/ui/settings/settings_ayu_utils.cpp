@@ -93,7 +93,7 @@ void SetupCopyLinkMenus(
 		if (!widget || id.size() <= prefix.size() || !id.startsWith(prefix)) {
 			continue;
 		}
-		const auto link = u"https://t.me/ayuSettings?s="_q
+		const auto link = u"tg://mtelegramsettings?s="_q
 			+ id.mid(prefix.size());
 		base::install_event_filter(widget, [=](not_null<QEvent*> e) {
 			if (e->type() != QEvent::ContextMenu) {

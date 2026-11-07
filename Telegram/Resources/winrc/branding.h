@@ -1,0 +1,1 @@
+#define IDS_APP_DISPLAY_NAME 100

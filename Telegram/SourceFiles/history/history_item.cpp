@@ -92,7 +92,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_credits.h"
 #include "styles/style_dialogs.h"
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
 #include "ayu/features/filters/filters_controller.h"
 #include "ayu/features/message_shot/message_shot.h"
@@ -2873,9 +2873,9 @@ void HistoryItem::applySentMessage(const MTPDmessage &data) {
 		_flags &= ~MessageFlag::InvertMedia;
 	}
 	if (data.is_noforwards()) {
-		_flags |= MessageFlag::NoForwards;
+		_flags |= MessageFlag::AyuNoForwards;
 	} else {
-		_flags &= ~MessageFlag::NoForwards;
+		_flags &= ~MessageFlag::AyuNoForwards;
 	}
 
 	const auto wasTypes = sharedMediaTypes();
@@ -4492,7 +4492,7 @@ void HistoryItem::setAyuHint(const QString &hint) {
 		history()->owner().requestItemViewRefresh(this);
 		history()->owner().requestItemResize(this);
 	} catch (...) {
-		DEBUG_LOG(("AyuGram: crash in setting hint"));
+		DEBUG_LOG(("mTelegram: crash in setting hint"));
 	}
 }
 
@@ -9449,3 +9449,4 @@ void HistoryItem::overrideMedia(std::unique_ptr<Data::Media> media) {
 void HistoryItem::removeTranslationBit() {
 	RemoveComponents(HistoryMessageTranslation::Bit());
 }
+

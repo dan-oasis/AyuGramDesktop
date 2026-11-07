@@ -9,7 +9,7 @@
 #include "settings/sections/settings_main.h"
 #include "lang_auto.h"
 #include "ayu/ayu_settings.h"
-#include "ayu/ui/ayu_logo.h"
+#include "window/main_window.h"
 #include "ayu/ui/settings/settings_appearance.h"
 #include "ayu/ui/settings/settings_ayu.h"
 #include "ayu/ui/settings/settings_chats.h"
@@ -19,6 +19,7 @@
 #include "core/version.h"
 #include "settings/settings_builder.h"
 #include "settings/settings_common.h"
+#include "settings/settings_experimental.h"
 #include "styles/style_ayu_settings.h"
 #include "styles/style_layers.h"
 #include "styles/style_menu_icons.h"
@@ -27,8 +28,6 @@
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/labels.h"
 #include "ui/wrap/vertical_layout.h"
-#include "window/window_session_controller.h"
-#include "window/window_session_controller_link_info.h"
 
 #include <QDesktopServices>
 
@@ -49,7 +48,7 @@ void BuildLogo(SectionBuilder &builder) {
 		logoRaw->paintRequest(
 		) | rpl::on_next([=] {
 			auto p = QPainter(logoRaw);
-			const auto image = AyuAssets::currentAppLogoPad();
+			const auto image = Window::Logo();
 			if (!image.isNull()) {
 				const auto size = st::settingsCloudPasswordIconSize;
 				const auto scaled = image.scaled(
@@ -70,7 +69,7 @@ void BuildVersionInfo(SectionBuilder &builder) {
 			.widget = object_ptr<Ui::FlatLabel>(
 				ctx.container,
 				rpl::single(
-					QString("AyuGram Desktop v")
+					QString("mTelegram v")
 					+ QString::fromLatin1(AppVersionStr)),
 				st::boxTitle),
 			.align = style::al_top,
@@ -101,7 +100,13 @@ void BuildCategories(SectionBuilder &builder) {
 	builder.addSubsectionTitle(tr::ayu_CategoriesHeader());
 
 	builder.addSectionButton({
-		.title = rpl::single(QString("AyuGram")),
+		.title = rpl::single(u"mTelegram tools and transport"_q),
+		.targetSection = Experimental::Id(),
+		.icon = { &st::menuIconManage },
+	});
+
+	builder.addSectionButton({
+		.title = rpl::single(QString("mTelegram")),
 		.targetSection = AyuGhost::Id(),
 		.icon = { &st::menuIconGroupReactions },
 	});
@@ -139,48 +144,12 @@ void BuildLinks(SectionBuilder &builder) {
 
 	builder.addSubsectionTitle(tr::ayu_LinksHeader());
 
-	const auto controller = builder.controller();
-
 	builder.addButton({
-		.id = u"ayu/channel"_q,
-		.title = tr::ayu_LinksChannel(),
-		.icon = { &st::menuIconChannel },
-		.label = rpl::single(QString("@ayugram")),
-		.onClick = [=] {
-			controller->showPeerByLink(Window::PeerByLinkInfo{
-				.usernameOrId = QString("ayugram"),
-			});
-		},
-	});
-	builder.addButton({
-		.id = u"ayu/chat"_q,
-		.title = tr::ayu_LinksChats(),
-		.icon = { &st::menuIconChats },
-		.label = rpl::single(QString("@ayugramchat")),
-		.onClick = [=] {
-			controller->showPeerByLink(Window::PeerByLinkInfo{
-				.usernameOrId = QString("ayugramchat"),
-			});
-		},
-	});
-	builder.addButton({
-		.id = u"ayu/crowdin"_q,
-		.title = tr::ayu_LinksTranslate(),
-		.icon = { &st::menuIconTranslate },
-		.label = rpl::single(QString("Crowdin")),
-		.onClick = [=] {
-			QDesktopServices::openUrl(
-				QString("https://translate.ayugram.one"));
-		},
-	});
-	builder.addButton({
-		.id = u"ayu/website"_q,
-		.title = tr::ayu_LinksDocumentation(),
-		.icon = { &st::menuIconIpAddress },
-		.label = rpl::single(QString("docs.ayugram.one")),
-		.onClick = [=] {
-			QDesktopServices::openUrl(
-				QString("https://docs.ayugram.one"));
+		.id = u"ayu/source"_q,
+		.title = rpl::single(u"GitHub"_q),
+		.icon = { &st::menuIconLink },
+		.onClick = [] {
+			QDesktopServices::openUrl(u"https://github.com/dan-oasis/AyuGramDesktop"_q);
 		},
 	});
 

@@ -1869,6 +1869,12 @@ ProxiesBoxController::ProxiesBoxController(not_null<Main::Account*> account)
 	}
 }
 
+QString ProxiesBoxController::ProxyLink(
+		not_null<Main::Account*> account,
+		const ProxyData &proxy) {
+	return ProxyDataToPublicLink(account, proxy);
+}
+
 ProxyData ProxiesBoxController::ProxyFromLink(const QString &link) {
 	const auto trimmed = link.trimmed();
 	const auto converted = Core::TryConvertUrlToLocal(trimmed);

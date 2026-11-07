@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/window_peer_menu.h"
 
+#include "window/mtelegram_tools.h"
+
 #include "base/call_delayed.h"
 #include "menu/menu_check_item.h"
 #include "menu/menu_mark_as_read.h"
@@ -141,7 +143,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QAction>
 #include <QtWidgets/QApplication>
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/utils/telegram_helpers.h"
 #include "styles/style_ayu_icons.h"
 #include "ayu/ui/context_menu/context_menu.h"
@@ -1944,7 +1946,10 @@ void Filler::fillContextMenuActions() {
 
 void Filler::fillHistoryActions() {
 	addToggleMuteSubmenu(true);
-	AyuUi::AddAyuGramActions(_peer, _thread, _controller, _addAction);
+	if (_peer) {
+		MTelegram::AddChatTools(_controller, _peer, _thread, _addAction);
+	}
+	AyuUi::AddmTelegramActions(_peer, _thread, _controller, _addAction);
 	addCreateTopic();
 	addInfo();
 	AyuUi::AddJumpToBeginningAction(_peer, _thread, _controller, _addAction);
@@ -2002,7 +2007,10 @@ void Filler::fillProfileActions() {
 }
 
 void Filler::fillRepliesActions() {
-	AyuUi::AddAyuGramActions(_peer, _thread, _controller, _addAction);
+	if (_peer) {
+		MTelegram::AddChatTools(_controller, _peer, _thread, _addAction);
+	}
+	AyuUi::AddmTelegramActions(_peer, _thread, _controller, _addAction);
 	if (_topic) {
 		addInfo();
 		AyuUi::AddJumpToBeginningAction(_peer, _thread, _controller, _addAction);
@@ -3707,7 +3715,7 @@ base::weak_qptr<Ui::BoxContent> ShowForwardMessagesBox(
 		if ((!state->submit || ayuForwarding) && successCallback) {
 			successCallback();
 		}
-		// AyuGram-changed
+		// mTelegram-changed
 	};
 
 	const auto sendMenuType = [=] {

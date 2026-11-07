@@ -18,6 +18,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_transcribes.h"
 #include "main/main_session.h"
 #include "main/main_account.h"
+#include "main/main_domain.h"
 #include "main/main_app_config.h"
 #include "mtproto/mtp_instance.h"
 #include "mtproto/mtproto_config.h"
@@ -251,6 +252,11 @@ Updates::Updates(not_null<Main::Session*> session)
 	session->account().mtpUpdates(
 	) | rpl::on_next([=](const MTPUpdates &updates) {
 		mtpUpdateReceived(updates);
+	}, _lifetime);
+
+	session->domain().activeSessionChanges(
+	) | rpl::on_next([=](Main::Session *) {
+		updateOnline();
 	}, _lifetime);
 
 	session->account().mtpNewSessionCreated(
@@ -1006,8 +1012,10 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 	// AyuGram sendOnlinePackets
 	const auto &ghost = AyuSettings::ghost(_session);
 	const auto& config = _session->serverConfig();
-	bool isOnlineOrig = Core::App().hasActiveWindow(&session());
-	bool isOnline = ghost.sendOnlinePackets() && isOnlineOrig;
+	const auto hasActiveWindow = Core::App().hasActiveWindow(&session());
+	auto isOnline = hasActiveWindow
+		&& Core::App().maybePrimarySession() == _session.get()
+		&& ghost.sendOnlinePackets();
 
 	int updateIn = config.onlineUpdatePeriod;
 	Assert(updateIn >= 0);
@@ -1032,7 +1040,7 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 		|| (isOnline && gotOtherOffline)) {
 		api().request(base::take(_onlineRequest)).cancel();
 
-		_lastWasOnline = isOnlineOrig;
+		_lastWasOnline = isOnline;
 		_lastSetOnline = ms;
 		if (!Core::Quitting()) {
 			_onlineRequest = api().request(MTPaccount_UpdateStatus(
@@ -1055,7 +1063,7 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 		session().changes().peerUpdated(
 			self,
 			Data::PeerUpdate::Flag::OnlineStatus);
-		if (!isOnlineOrig) { // Went offline, so we need to save message draft to the cloud.
+		if (!hasActiveWindow) { // Went offline, so we need to save message draft to the cloud.
 			api().saveCurrentDraftToCloud();
 			session().data().maybeStopWatchForOffline(self);
 		}

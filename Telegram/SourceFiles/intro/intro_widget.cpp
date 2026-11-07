@@ -47,7 +47,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_intro.h"
 #include "base/qt/qt_common_adapters.h"
 
-// AyuGram includes
+// mTelegram includes
 #include "boxes/about_box.h"
 
 
@@ -99,7 +99,8 @@ Widget::Widget(
 , _connecting(std::make_unique<Window::ConnectionState>(
 		this,
 		account,
-		rpl::single(true))) {
+		rpl::single(true),
+		true)) {
 	_settings->entity()->setTextTransform(Ui::RoundButtonTextTransform::ToUpper);
 	controller->setDefaultFloatPlayerDelegate(floatPlayerDelegate());
 
@@ -179,7 +180,7 @@ Widget::Widget(
 		}, lifetime());
 	}
 
-	_footer->setText(QString("AyuGram Desktop v%1").arg(currentVersionText()));
+	_footer->setText(QString("mTelegram v%1").arg(currentVersionText()));
 }
 
 rpl::producer<> Widget::showSettingsRequested() const {

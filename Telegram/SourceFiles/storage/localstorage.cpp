@@ -38,7 +38,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <unistd.h>
 #endif // Q_OS_WIN
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
 
 
@@ -531,66 +531,10 @@ void rewriteSettingsIfNeeded() {
 	}
 }
 
-const QString &AutoupdatePrefix(const QString &replaceWith = {}) {
-	Expects(!Core::UpdaterDisabled());
-
-	static auto value = QString();
-	if (!replaceWith.isEmpty()) {
-		value = replaceWith;
-	}
-	return value;
-}
-
-QString autoupdatePrefixFile() {
-	Expects(!Core::UpdaterDisabled());
-
-	return cWorkingDir() + "tdata/prefix";
-}
-
-const QString &readAutoupdatePrefixRaw() {
-	Expects(!Core::UpdaterDisabled());
-
-	const auto &result = AutoupdatePrefix();
-	if (!result.isEmpty()) {
-		return result;
-	}
-	QFile f(autoupdatePrefixFile());
-	if (f.open(QIODevice::ReadOnly)) {
-		const auto value = QString::fromUtf8(f.readAll());
-		if (!value.isEmpty()) {
-			return AutoupdatePrefix(value);
-		}
-	}
-	return AutoupdatePrefix("https://update.ayugram.one/");
-}
-
-void writeAutoupdatePrefix(const QString &prefix) {
-	if (Core::UpdaterDisabled()) {
-		return;
-	}
-
-	const auto current = readAutoupdatePrefixRaw();
-    const auto fixedPrefix = QString::fromStdString("https://update.ayugram.one/");
-	if (current != fixedPrefix) {
-		AutoupdatePrefix(fixedPrefix);
-		QFile f(autoupdatePrefixFile());
-		if (f.open(QIODevice::WriteOnly)) {
-			f.write(fixedPrefix.toUtf8());
-			f.close();
-		}
-		if (cAutoUpdate()) {
-			Core::UpdateChecker checker;
-			checker.start();
-		}
-	}
-}
-
 QString readAutoupdatePrefix() {
 	Expects(!Core::UpdaterDisabled());
 
-	static const auto RegExp = QRegularExpression("/+$");
-	auto result = readAutoupdatePrefixRaw();
-	return result.replace(RegExp, QString());
+	return {};
 }
 
 QString updateManifestFile() {

@@ -11,15 +11,10 @@
 #include "ayu/ayu_ui_settings.h"
 #include "ayu/ayu_worker.h"
 #include "ayu/data/ayu_database.h"
-#include "ayu/ui/ayu_logo.h"
 #include "features/translator/ayu_translator.h"
 #include "lang/lang_instance.h"
 #include "ui/chat/chat_style_radius.h"
 #include "utils/rc_manager.h"
-
-#ifdef Q_OS_WIN
-#include "ayu/utils/windows_utils.h"
-#endif
 
 namespace AyuInfra {
 
@@ -31,7 +26,6 @@ void initLang() {
 		return;
 	}
 	AyuLanguage::init();
-	AyuLanguage::currentInstance()->fetchLanguage(id, baseId);
 }
 
 void initUiSettings() {
@@ -60,18 +54,10 @@ void initTranslator() {
 	Ayu::Translator::TranslateManager::init();
 }
 
-void initIcon() {
-#ifdef Q_OS_WIN
-	AyuAssets::loadAppIco();
-	reloadAppIconFromTaskBar();
-#endif
-}
-
 void init() {
 	initLang();
 	initDatabase();
 	initUiSettings();
-	initIcon();
 	initWorker();
 	initRCManager();
 	initTranslator();

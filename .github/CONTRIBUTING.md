@@ -1,6 +1,6 @@
 # Contributing
 
-This document describes how you can contribute to AyuGram Desktop.
+This document describes how you can contribute to mTelegram.
 
 **Table of Contents**
 
@@ -18,11 +18,7 @@ This document describes how you can contribute to AyuGram Desktop.
 
 ## What contributions are accepted
 
-We highly appreciate your contributions in the matter of fixing bugs and optimizing the AyuGram Desktop source code and its documentation. In case of fixing the existing user experience please push to your fork and [submit a pull request][pr].
-
-If you have a translations-related contribution, check out [our Crowdin][translate].
-
-Highly appreciated feature implementations from [Android app][android_repo].
+We highly appreciate your contributions in the matter of fixing bugs and optimizing the mTelegram source code and its documentation. In case of fixing the existing user experience please push to your fork and [submit a pull request][pr].
 
 ## Build instructions
 
@@ -35,7 +31,7 @@ Telegram Desktop is advancing quickly. It is therefore critical that you pull up
 
 To pull in upstream changes:
 
-    git remote add upstream https://github.com/AyuGram/AyuGramDesktop.git
+    git remote add upstream https://github.com/telegramdesktop/tdesktop.git
     git fetch upstream master
 
 Check the log to be sure that you actually want the changes, before merging:
@@ -54,7 +50,7 @@ For more info, see [GitHub Help][help_fork_repo].
 
 ## How to get your pull request accepted
 
-We want to improve AyuGram Desktop with your contributions. But we also want to provide a stable experience for our users and the community. Follow these rules and you should succeed without a problem!
+We want to improve mTelegram with your contributions. But we also want to provide a stable experience for our users and the community. Follow these rules and you should succeed without a problem!
 
 ### Keep your pull requests limited to a single issue
 
@@ -112,8 +108,6 @@ If your pull request changes anything visible in the application (interface, beh
 [help_fork_repo]: https://help.github.com/articles/fork-a-repo/
 [help_change_commit_message]: https://help.github.com/articles/changing-a-commit-message/
 [commit_message]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
-[pr]: https://github.com/AyuGram/AyuGramDesktop/compare
-[build_instructions]: https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs
+[pr]: ../../compare
+[build_instructions]: ../docs
 [closing-issues-via-commit-messages]: https://help.github.com/articles/closing-issues-via-commit-messages/
-[translate]: https://crowdin.com/project/ayugram
-[android_repo]: https://github.com/AyuGram/AyuGram4A

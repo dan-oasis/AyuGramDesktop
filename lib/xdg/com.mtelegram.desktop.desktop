@@ -1,0 +1,22 @@
+[Desktop Entry]
+Name=mTelegram
+Comment=Unofficial desktop client for Telegram
+TryExec=mTelegram
+Exec=env DESKTOPINTEGRATION=1 mTelegram -- %U
+Icon=com.mtelegram.desktop
+Terminal=false
+StartupWMClass=mTelegram
+Type=Application
+Categories=Chat;Network;InstantMessaging;Qt;
+MimeType=x-scheme-handler/tg;x-scheme-handler/tonsite;
+Keywords=tg;chat;im;messaging;messenger;sms;telegram;tdesktop;
+Actions=quit;
+DBusActivatable=true
+SingleMainWindow=true
+X-GNOME-UsesNotifications=true
+X-GNOME-SingleWindow=true
+
+[Desktop Action quit]
+Exec=mTelegram -quit
+Name=Quit mTelegram
+Icon=application-exit

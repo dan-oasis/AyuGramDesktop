@@ -294,7 +294,6 @@ public:
 	[[nodiscard]] bool showChannelReactions() const { return _showChannelReactions.current(); }
 	[[nodiscard]] bool showGroupReactions() const { return _showGroupReactions.current(); }
 	[[nodiscard]] bool showPrivateChatReactions() const { return _showPrivateChatReactions.current(); }
-	[[nodiscard]] const QString &appIcon() const { return _appIcon.current(); }
 	[[nodiscard]] bool simpleQuotesAndReplies() const { return _simpleQuotesAndReplies.current(); }
 	[[nodiscard]] bool hideFastShare() const { return _hideFastShare.current(); }
 	[[nodiscard]] bool replaceBottomInfoWithIcons() const { return _replaceBottomInfoWithIcons.current(); }
@@ -381,7 +380,6 @@ public:
 	void setShowChannelReactions(bool val);
 	void setShowGroupReactions(bool val);
 	void setShowPrivateChatReactions(bool val);
-	void setAppIcon(const QString &val);
 	void setSimpleQuotesAndReplies(bool val);
 	void setHideFastShare(bool val);
 	void setReplaceBottomInfoWithIcons(bool val);
@@ -497,8 +495,6 @@ public:
 	[[nodiscard]] rpl::producer<bool> showGroupReactionsChanges() const { return _showGroupReactions.changes(); }
 	[[nodiscard]] rpl::producer<bool> showPrivateChatReactionsValue() const { return _showPrivateChatReactions.value(); }
 	[[nodiscard]] rpl::producer<bool> showPrivateChatReactionsChanges() const { return _showPrivateChatReactions.changes(); }
-	[[nodiscard]] rpl::producer<QString> appIconValue() const { return _appIcon.value(); }
-	[[nodiscard]] rpl::producer<QString> appIconChanges() const { return _appIcon.changes(); }
 	[[nodiscard]] rpl::producer<bool> simpleQuotesAndRepliesValue() const { return _simpleQuotesAndReplies.value(); }
 	[[nodiscard]] rpl::producer<bool> simpleQuotesAndRepliesChanges() const { return _simpleQuotesAndReplies.changes(); }
 	[[nodiscard]] rpl::producer<bool> hideFastShareValue() const { return _hideFastShare.value(); }
@@ -651,7 +647,6 @@ private:
 	rpl::variable<bool> _showChannelReactions = true;
 	rpl::variable<bool> _showGroupReactions = true;
 	rpl::variable<bool> _showPrivateChatReactions = true;
-	rpl::variable<QString> _appIcon;
 	rpl::variable<bool> _simpleQuotesAndReplies = false;
 	rpl::variable<bool> _hideFastShare = false;
 	rpl::variable<bool> _replaceBottomInfoWithIcons = true;

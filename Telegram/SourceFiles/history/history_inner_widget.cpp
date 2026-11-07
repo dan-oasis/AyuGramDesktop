@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_inner_widget.h"
 
+#include "window/mtelegram_tools.h"
+
 #include "api/api_polls.h"
 #include "chat_helpers/stickers_emoji_pack.h"
 #include "core/application.h"
@@ -3809,7 +3811,8 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
 								.append(item->originalText()))
 							: item->originalText();
 						if (!translate.text.isEmpty()
-							&& !Ui::SkipTranslate(translate)) {
+							&& (MTelegram::Enabled(MTelegram::kQuickTranslate)
+								|| !Ui::SkipTranslate(translate))) {
 							_menu->addAction(tr::lng_context_translate(tr::now), [=] {
 								_controller->show(Box(
 									Ui::TranslateBox,
@@ -4221,6 +4224,12 @@ void HistoryInner::saveContextGif(FullMsgId itemId) {
 void HistoryInner::copyContextText(FullMsgId itemId) {
 	if (const auto item = session().data().message(itemId)) {
 		if (!showCopyRestriction(item)) {
+			if (MTelegram::Enabled(MTelegram::kFormattedCopy)) {
+				const auto group = session().data().groups().find(item);
+				TextUtilities::SetClipboardText(
+					HistorySelectedItemsTextParts({ { item, group } }, true).composed());
+				return;
+			}
 			if (const auto group = session().data().groups().find(item)) {
 				TextUtilities::SetClipboardText(HistoryGroupText(group));
 			} else {

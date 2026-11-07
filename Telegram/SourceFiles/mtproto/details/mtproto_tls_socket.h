@@ -9,7 +9,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "mtproto/details/mtproto_abstract_socket.h"
 
+#include <QtNetwork/QTcpSocket>
+
 namespace MTP::details {
+
+extern const char kOptionAdvancedFakeTls[];
+extern const char kOptionRotateFakeTls[];
 
 class TlsSocket final : public AbstractSocket {
 public:
@@ -43,6 +48,8 @@ private:
 	[[nodiscard]] bytes::const_span keyFromSecret() const;
 
 	void plainConnected();
+	void sendClientHello(const QByteArray &hello);
+	void rotateProfileIfUnanswered();
 	void plainDisconnected();
 	void plainReadyRead();
 	void handleError(int errorCode = 0);
@@ -57,6 +64,8 @@ private:
 
 	const bytes::vector _secret;
 	QTcpSocket _socket;
+	QString _rotationKey;
+	bool _clientHelloQueued = false;
 	State _state = State::NotConnected;
 	QByteArray _incoming;
 	int _incomingGoodDataOffset = 0;

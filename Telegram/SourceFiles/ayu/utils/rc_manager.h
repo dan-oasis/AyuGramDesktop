@@ -83,7 +83,6 @@ private:
 
 	void makeRequest();
 	void sendRequest();
-	bool tryRetryWithExteraFallback();
 
 	void gotResponse();
 	void gotFailure(QNetworkReply::NetworkError e);
@@ -99,7 +98,7 @@ private:
 	std::unordered_set<ID> _supporterChannels = {};
 	std::unordered_map<ID, CustomBadge> _customBadges = {};
 
-	QString _donateUsername = QString("@ayugramOwner");
+	QString _donateUsername;
 	QString _donateAmountUsd = QString("5.00");
 	QString _donateAmountTon = QString("3.50");
 	QString _donateAmountRub = QString("386");
@@ -108,7 +107,5 @@ private:
 
 	std::unique_ptr<QNetworkAccessManager> _manager = nullptr;
 	QNetworkReply *_reply = nullptr;
-	bool _useExteraFallback = false;
-	bool _retryAttempted = false;
 
 };

@@ -247,7 +247,7 @@ bool needToShowItem(ContextMenuVisibility state) {
 		|| (state == ContextMenuVisibility::VisibleWithModifier && base::IsExtendedContextMenuModifierPressed());
 }
 
-void AddAyuGramActions(PeerData *peerData,
+void AddmTelegramActions(PeerData *peerData,
 							   Data::Thread *thread,
 							   not_null<Window::SessionController*> sessionController,
 							   const Window::PeerMenuCallback &addCallback) {
@@ -268,7 +268,7 @@ void AddAyuGramActions(PeerData *peerData,
 	const auto topicId = topic ? topic->rootId().bare : 0;
 
 	addCallback(Window::PeerMenuCallback::Args{
-		.text = u"AyuGram"_q,
+		.text = u"mTelegram"_q,
 		.handler = nullptr,
 		.icon = &st::menuIconGroupReactions,
 		.fillSubmenu = [=](not_null<Ui::PopupMenu*> menu) {
@@ -971,7 +971,7 @@ void AddBurnAction(not_null<Ui::PopupMenu*> menu, HistoryItem *item) {
 					item->markContentsRead();
 				}).send();
 		},
-		&st::menuIconTTLAny);
+			&st::menuIconTTL);
 }
 
 void AddCreateFilterAction(not_null<Ui::PopupMenu*> menu,
@@ -1003,3 +1003,4 @@ void AddCreateFilterAction(not_null<Ui::PopupMenu*> menu,
 }
 
 } // namespace AyuUi
+

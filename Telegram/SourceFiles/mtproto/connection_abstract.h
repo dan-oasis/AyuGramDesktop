@@ -74,7 +74,8 @@ public:
 		DcOptions::Variants::Protocol protocol,
 		QThread *thread,
 		const bytes::vector &secret,
-		const ProxyData &proxy);
+		const ProxyData &proxy,
+		bool websocket = false);
 
 	[[nodiscard]] virtual ConnectionPointer clone(const ProxyData &proxy) = 0;
 

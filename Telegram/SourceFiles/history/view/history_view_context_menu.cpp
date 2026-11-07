@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_context_menu.h"
 
+#include "window/mtelegram_tools.h"
+
 #include "api/api_attached_stickers.h"
 #include "api/api_editing.h"
 #include "api/api_global_privacy.h"
@@ -1916,6 +1918,15 @@ void FillContextMenuItems(
 				result->addAction(tr::lng_context_copy_text(tr::now), [=] {
 					if (const auto item = owner->message(itemId)) {
 						if (!list->showCopyRestriction(item)) {
+							if (MTelegram::Enabled(MTelegram::kFormattedCopy)) {
+								const auto group = asGroup
+									? owner->groups().find(item)
+									: nullptr;
+								TextUtilities::SetClipboardText(
+									HistorySelectedItemsTextParts(
+										{ { item, group } }, true).composed());
+								return;
+							}
 							if (asGroup) {
 								if (const auto group = owner->groups().find(item)) {
 									TextUtilities::SetClipboardText(HistoryGroupText(group));
@@ -1938,7 +1949,8 @@ void FillContextMenuItems(
 				: item->originalText();
 			if ((!item->translation() || !item->history()->translatedTo())
 				&& !translate.text.isEmpty()
-				&& !Ui::SkipTranslate(translate)) {
+				&& (MTelegram::Enabled(MTelegram::kQuickTranslate)
+					|| !Ui::SkipTranslate(translate))) {
 				result->addAction(tr::lng_context_translate(tr::now), [=] {
 					if (const auto item = owner->message(itemId)) {
 						list->controller()->show(Box(

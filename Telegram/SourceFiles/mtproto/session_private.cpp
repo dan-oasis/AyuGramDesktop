@@ -149,9 +149,19 @@ base::options::toggle OptionPreferIPv6({
 	.description = "Prefer IPv6 if it is available. Require \"Try connecting through IPv6\" to be enabled",
 });
 
+#ifdef MTELEGRAM_HAS_WSS
+base::options::toggle OptionNativeWss({
+	.id = kOptionNativeWss,
+	.name = "Native Telegram WSS",
+	.description = "Prefer WSS without a proxy. Retry over the regular transport when the relay is unavailable.",
+	.restartRequired = true,
+});
+#endif
+
 } // namespace
 
 const char kOptionPreferIPv6[] = "prefer-ipv6";
+const char kOptionNativeWss[] = "native-telegram-wss";
 
 SessionPrivate::SessionPrivate(
 	not_null<Instance*> instance,
@@ -197,7 +207,8 @@ void SessionPrivate::appendTestConnection(
 		DcOptions::Variants::Protocol protocol,
 		const QString &ip,
 		int port,
-		const bytes::vector &protocolSecret) {
+		const bytes::vector &protocolSecret,
+		bool websocket) {
 	QWriteLocker lock(&_stateMutex);
 
 	const auto priority = (qthelp::is_ipv6(ip) ? (OptionPreferIPv6.value() ? 2 : 0) : 1)
@@ -209,7 +220,8 @@ void SessionPrivate::appendTestConnection(
 			protocol,
 			thread(),
 			protocolSecret,
-			_options->proxy),
+			_options->proxy,
+			websocket),
 		priority
 	});
 	const auto weak = _testConnections.back().data.get();
@@ -1031,6 +1043,24 @@ void SessionPrivate::connectToServer(bool afterConfig) {
 			return;
 		}
 	}
+#ifdef MTELEGRAM_HAS_WSS
+	const auto protocolDc = getProtocolDcId();
+	const auto relayDc = std::abs(protocolDc);
+	_usingNativeWss = OptionNativeWss.value()
+		&& (crl::now() >= _wssFallbackUntil)
+		&& (_options->proxy.type == ProxyData::Type::None)
+		&& !_instance->isTestMode()
+		&& !_instance->isKeysDestroyer()
+		&& (_currentDcType != DcType::Temporary)
+		&& (_currentDcType != DcType::Cdn)
+		&& (relayDc >= 1 && relayDc <= 5);
+	if (_usingNativeWss) {
+		const auto host = u"kws%1%2.web.telegram.org"_q
+			.arg(relayDc)
+			.arg(protocolDc < 0 ? u"-1"_q : QString());
+		appendTestConnection(DcOptions::Variants::Tcp, host, 443, {}, true);
+	} else
+#endif
 	if (_options->proxy.type == ProxyData::Type::Mtproto
 		|| _options->proxy.type == ProxyData::Type::Web) {
 		// host, port, secret for mtproto proxy are taken from proxy.
@@ -1110,7 +1140,12 @@ void SessionPrivate::connectToServer(bool afterConfig) {
 	_pingId = _pingMsgId = _pingIdToSend = _pingSendAt = 0;
 	_pingSender.cancel();
 
+#ifdef MTELEGRAM_HAS_WSS
+	_waitForConnectedTimer.callOnce(
+		_usingNativeWss ? kMaxConnectedTimeout : _waitForConnected);
+#else
 	_waitForConnectedTimer.callOnce(_waitForConnected);
+#endif
 }
 
 void SessionPrivate::restart() {
@@ -1256,6 +1291,11 @@ void SessionPrivate::waitBetterFailed() {
 }
 
 void SessionPrivate::connectingTimedOut() {
+#ifdef MTELEGRAM_HAS_WSS
+	if (_usingNativeWss) {
+		_wssFallbackUntil = crl::now() + 60 * 1000;
+	}
+#endif
 	for (const auto &connection : _testConnections) {
 		connection.data->timedOut();
 	}
@@ -2403,6 +2443,11 @@ void SessionPrivate::onConnected(
 
 void SessionPrivate::onDisconnected(
 		not_null<AbstractConnection*> connection) {
+#ifdef MTELEGRAM_HAS_WSS
+	if (_usingNativeWss && !_connection) {
+		_wssFallbackUntil = crl::now() + 60 * 1000;
+	}
+#endif
 	removeTestConnection(connection);
 
 	if (_testConnections.empty()) {
@@ -2661,6 +2706,11 @@ void SessionPrivate::authKeyChecked() {
 void SessionPrivate::onError(
 		not_null<AbstractConnection*> connection,
 		qint32 errorCode) {
+#ifdef MTELEGRAM_HAS_WSS
+	if (_usingNativeWss && !_connection) {
+		_wssFallbackUntil = crl::now() + 60 * 1000;
+	}
+#endif
 	if (errorCode == -429) {
 		LOG(("Protocol Error: -429 flood code returned!"));
 	} else if (errorCode == -444) {

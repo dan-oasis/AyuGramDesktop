@@ -39,7 +39,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtCore/QDateTime>
 #include <QtCore/QLocale>
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
 #include "ayu/ayu_url_handlers.h"
 #include "ayu/features/streamer_mode/streamer_mode.h"
@@ -496,7 +496,7 @@ bool UiIntegration::handleUrlClick(
 	}
 
 	if (AyuUrlHandlers::IsUnsafeExternalUrl(url)) {
-		LOG(("AyuGram: Blocked opening unsafe url: %1").arg(url));
+		LOG(("mTelegram: Blocked opening unsafe url: %1").arg(url));
 		return true;
 	}
 

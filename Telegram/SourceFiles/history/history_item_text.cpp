@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_item_text.h"
 
+#include "window/mtelegram_tools.h"
+
 #include "data/data_forum_topic.h"
 #include "data/data_groups.h"
 #include "data/data_media_types.h"
@@ -785,6 +787,7 @@ HistorySelectedTextParts HistorySelectedItemWrappedText(
 HistorySelectedTextParts HistorySelectedItemsTextParts(
 		const std::vector<HistorySelectedTextEntry> &entries,
 		bool richContext) {
+	richContext = richContext || MTelegram::Enabled(MTelegram::kFormattedCopy);
 	if (!richContext && entries.size() == 1) {
 		const auto &part = entries.front();
 		if (part.group) {

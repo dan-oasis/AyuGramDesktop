@@ -33,7 +33,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <Cocoa/Cocoa.h>
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
 
 
@@ -476,11 +476,11 @@ void Manager::buildAppleMenu(QMenu *main) {
 	{
 		auto callback = [this] {
 			withActiveWindow([](not_null<Window::Controller*> window) {
-				window->show(Box(AboutBox, window->sessionController()));
+				window->show(Box(AboutBox));
 			});
 		};
 		_about = main->addAction(
-			u"About AyuGram"_q,
+			u"About mTelegram"_q,
 			std::move(callback));
 		_about->setMenuRole(QAction::AboutQtRole);
 	}
@@ -784,7 +784,7 @@ void Manager::buildWindowMenu(QMenu *window) {
 }
 
 void Manager::buildMenu() {
-	buildAppleMenu(_menuBar->addMenu(u"AyuGram"_q));
+	buildAppleMenu(_menuBar->addMenu(u"mTelegram"_q));
 	_file = _menuBar->addMenu(u"File"_q);
 	buildFileMenu(_file);
 	_edit = _menuBar->addMenu(u"Edit"_q);
