@@ -117,7 +117,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Could not fetch Qt WebSockets' }
             New-Item -ItemType Directory -Force $build | Out-Null
             Set-Location $build
-            & (Join-Path $prefix 'bin\qt-configure-module.bat') $module -debug -cmake-generator Ninja -- -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF
+            & (Join-Path $prefix 'bin\qt-configure-module.bat') $module -cmake-generator Ninja -- -DCMAKE_BUILD_TYPE=Debug -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF
             if ($LASTEXITCODE -ne 0) { throw 'Could not configure Qt WebSockets' }
             cmake --build . --parallel 2
             if ($LASTEXITCODE -ne 0) { throw 'Could not compile Qt WebSockets' }
