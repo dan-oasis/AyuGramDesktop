@@ -87,6 +87,16 @@ elseif (MTELEGRAM_REQUIRE_WSS)
     message(FATAL_ERROR "Native WSS requires Qt 6.5 or newer")
 endif()
 if (TARGET Qt6::WebSockets)
+    if (WIN32 AND NOT DESKTOP_APP_USE_PACKAGED AND TARGET ZLIB::ZLIB)
+        # Qt's imported targets must use the same bundled zlib as Telegram.
+        get_target_property(zlib_debug desktop-app::external_zlib IMPORTED_LOCATION_DEBUG)
+        get_target_property(zlib_release desktop-app::external_zlib IMPORTED_LOCATION)
+        set_target_properties(ZLIB::ZLIB PROPERTIES
+            IMPORTED_LOCATION_DEBUG "${zlib_debug}"
+            IMPORTED_LOCATION_RELEASE "${zlib_release}"
+        )
+    endif()
+
     nice_target_sources(Telegram ${src_loc}
     PRIVATE
         mtproto/details/mtproto_wss_socket.cpp
