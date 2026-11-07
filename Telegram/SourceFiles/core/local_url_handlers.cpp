@@ -2030,11 +2030,11 @@ const std::vector<LocalUrlHandler> &LocalUrlHandlers() {
 			AyuUrlHandlers::ResolveChat
 		},
 		{
-			u"^ayusettings/?\\?(.+)(#|$)"_q,
+			u"^(?:mtelegramsettings|ayusettings)/?\\?(.+)(#|$)"_q,
 			AyuUrlHandlers::HandleAyuSettings
 		},
 		{
-			u"^ayusettings/?$"_q,
+			u"^(?:mtelegramsettings|ayusettings)/?$"_q,
 			AyuUrlHandlers::HandleAyuSettings
 		},
 		{

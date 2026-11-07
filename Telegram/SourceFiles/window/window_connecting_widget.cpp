@@ -219,9 +219,11 @@ bool ConnectionState::State::operator==(const State &other) const {
 ConnectionState::ConnectionState(
 	not_null<Ui::RpWidget*> parent,
 	not_null<Main::Account*> account,
-	rpl::producer<bool> shown)
+	rpl::producer<bool> shown,
+	bool showProxyWhenDisabled)
 : _account(account)
 , _parent(parent)
+, _showProxyWhenDisabled(showProxyWhenDisabled)
 , _refreshTimer([=] { refreshState(); })
 , _currentLayout(computeLayout(_state)) {
 	rpl::combine(
@@ -443,10 +445,17 @@ auto ConnectionState::computeLayout(const State &state) const -> Layout {
 	result.progressShown = (state.type != State::Type::Connected);
 	result.visible = state.exposed
 		&& !state.updateReady
-		&& (state.useProxy
+		&& (_showProxyWhenDisabled
+			|| state.useProxy
 			|| state.type == State::Type::Connecting
 			|| state.type == State::Type::Waiting);
 	switch (state.type) {
+	case State::Type::Connected:
+		if (_showProxyWhenDisabled && state.underCursor) {
+			result.text = tr::lng_proxy_settings(tr::now);
+		}
+		break;
+
 	case State::Type::Connecting:
 		result.text = state.underCursor
 			? tr::lng_connecting(tr::now)
@@ -505,6 +514,7 @@ ConnectionState::Widget::Widget(
 , _currentLayout(layout) {
 	_proxyIcon = Ui::CreateChild<ProxyIcon>(this);
 	_progress = Ui::CreateChild<Progress>(this);
+	setLayout(layout);
 
 	addClickHandler([=] {
 		Ui::show(ProxiesBoxController::CreateOwningBox(account));
@@ -624,7 +634,9 @@ void ConnectionState::Widget::setLayout(const Layout &layout) {
 	_currentLayout = layout;
 	_proxyIcon->setToggled(_currentLayout.proxyEnabled);
 	refreshRetryLink(_currentLayout.hasRetry);
-	setAccessibleName(_currentLayout.text);
+	setAccessibleName(_currentLayout.text.isEmpty()
+		? tr::lng_proxy_settings(tr::now)
+		: _currentLayout.text);
 }
 
 void ConnectionState::Widget::setProgressVisibility(bool visible) {

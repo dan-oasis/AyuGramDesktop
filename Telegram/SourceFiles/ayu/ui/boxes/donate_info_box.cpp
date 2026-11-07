@@ -201,26 +201,28 @@ void FillDonateInfoBox(not_null<Ui::GenericBox*> box, not_null<Window::SessionCo
 	Ui::AddSkip(box->verticalLayout());
 
 	const auto username = RCManager::getInstance().donateUsername();
-	auto usernameTrimmed = username;
-	if (usernameTrimmed.startsWith('@')) {
-		usernameTrimmed.remove(0, 1);
-	}
-	const TextWithEntities proofText = tr::ayu_SupportBoxSendProofInfo(
-		tr::now,
-		lt_item,
-		Ui::Text::Link(username, controller->session().createInternalLinkFull(usernameTrimmed)),
-		tr::rich);
-	box->verticalLayout()->add(InfoRow(
-		box->verticalLayout(),
-		&controller->session(),
-		tr::ayu_SupportBoxSendProofHeader(tr::now),
-		proofText,
-		&st::menuIconPhoto,
-		Core::TextContext({
-			.session = std::move(&controller->session()),
-		})));
+	if (!username.isEmpty()) {
+		auto usernameTrimmed = username;
+		if (usernameTrimmed.startsWith('@')) {
+			usernameTrimmed.remove(0, 1);
+		}
+		const TextWithEntities proofText = tr::ayu_SupportBoxSendProofInfo(
+			tr::now,
+			lt_item,
+			Ui::Text::Link(username, controller->session().createInternalLinkFull(usernameTrimmed)),
+			tr::rich);
+		box->verticalLayout()->add(InfoRow(
+			box->verticalLayout(),
+			&controller->session(),
+			tr::ayu_SupportBoxSendProofHeader(tr::now),
+			proofText,
+			&st::menuIconPhoto,
+			Core::TextContext({
+				.session = std::move(&controller->session()),
+			})));
 
-	Ui::AddSkip(box->verticalLayout());
+		Ui::AddSkip(box->verticalLayout());
+	}
 
 	box->verticalLayout()->add(InfoRow(
 		box->verticalLayout(),

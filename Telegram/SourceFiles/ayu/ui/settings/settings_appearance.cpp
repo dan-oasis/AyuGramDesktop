@@ -11,7 +11,6 @@
 #include "ayu/ayu_ui_settings.h"
 #include "ayu/ui/boxes/font_selector.h"
 #include "ayu/ui/components/avatar_corners_preview.h"
-#include "ayu/ui/components/icon_picker.h"
 #include "ayu/ui/settings/ayu_builder.h"
 #include "ayu/ui/settings/settings_ayu_utils.h"
 #include "ayu/ui/settings/settings_main.h"
@@ -51,18 +50,6 @@ bool HasDrawerBots(not_null<Window::SessionController*> controller) {
 }
 
 void BuildAppIcon(SectionBuilder &builder, AyuSectionBuilder &ayu) {
-	builder.addSubsectionTitle({
-		.id = u"ayu/appIcon"_q,
-		.title = tr::ayu_AppIconHeader(),
-	});
-
-	builder.add([](const WidgetContext &ctx) -> SectionBuilder::WidgetToAdd {
-		return {
-			.widget = object_ptr<IconPicker>(ctx.container),
-			.margin = st::settingsButtonNoIcon.padding,
-		};
-	});
-
 #if defined Q_OS_WIN || defined Q_OS_MAC
 	builder.addDivider();
 	builder.addSkip();
@@ -144,8 +131,7 @@ void BuildAvatarCorners(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	auto *previewRaw = static_cast<AvatarCornersPreview*>(nullptr);
 	builder.add([&](const Builder::WidgetContext &ctx) -> SectionBuilder::WidgetToAdd {
 		auto preview = object_ptr<AvatarCornersPreview>(
-			ctx.container,
-			controller);
+			ctx.container);
 		previewRaw = preview.data();
 		const auto vMargin = st::settingsButtonNoIcon.padding
 			- st::defaultDialogRow.padding;

@@ -31,7 +31,7 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
-      - name: Apply AyuGram changes to updated libraries
+      - name: Apply mTelegram changes to updated libraries
         working-directory: TBuild/tdesktop
         run: |
           $ErrorActionPreference = 'Stop'

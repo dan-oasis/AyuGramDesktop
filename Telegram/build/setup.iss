@@ -1,8 +1,8 @@
-#define MyAppShortName "AyuGram"
-#define MyAppName "AyuGram Desktop"
-#define MyAppPublisher "Radolyn Labs"
-#define MyAppURL "https://github.com/AyuGram"
-#define MyAppExeName "AyuGram.exe"
+#define MyAppShortName "mTelegram"
+#define MyAppName "mTelegram"
+#define MyAppPublisher "mTelegram"
+#define MyAppURL "https://github.com/dan-oasis/AyuGramDesktop"
+#define MyAppExeName "mTelegram.exe"
 #define MyAppId "53F49750-6209-4FBF-9CA8-7A333C87D666"
 #define CurrentYear GetDateTimeString('yyyy','','')
 
@@ -24,7 +24,7 @@ AllowNoIcons=yes
 OutputDir={#ReleasePath}
 SetupIconFile={#SourcePath}..\Resources\art\icon256.ico
 UninstallDisplayName={#MyAppName}
-UninstallDisplayIcon={app}\Telegram.exe
+UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma
 SolidCompression=yes
 DisableStartupPrompt=yes
@@ -38,11 +38,11 @@ SignTool=sha256
 
 #ifndef MyOutputBaseFilename
   #if MyBuildTarget == "winarm"
-    #define MyOutputBaseFilename "ayusetup-arm64." + MyAppVersionFull
+    #define MyOutputBaseFilename "mtelegram-setup-arm64." + MyAppVersionFull
   #elif MyBuildTarget == "win64"
-    #define MyOutputBaseFilename "ayusetup-x64." + MyAppVersionFull
+    #define MyOutputBaseFilename "mtelegram-setup-x64." + MyAppVersionFull
   #else
-    #define MyOutputBaseFilename "ayusetup." + MyAppVersionFull
+    #define MyOutputBaseFilename "mtelegram-setup." + MyAppVersionFull
   #endif
 #endif
 OutputBaseFilename={#MyOutputBaseFilename}

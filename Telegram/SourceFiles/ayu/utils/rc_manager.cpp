@@ -12,7 +12,6 @@
 
 namespace {
 
-constexpr auto kPrimaryUrl = "https://update.ayugram.one/rc/current/desktop2";
 constexpr auto kExteraUrl = "https://api.exteragram.app/api/v1/profiles/compact";
 constexpr auto kFetchTimeout = 15 * 1000;
 
@@ -42,7 +41,6 @@ void RCManager::start() {
 }
 
 void RCManager::makeRequest() {
-	_retryAttempted = false;
 	sendRequest();
 }
 
@@ -51,7 +49,7 @@ void RCManager::sendRequest() {
 		return;
 	}
 
-	const auto url = QString::fromLatin1(_useExteraFallback ? kExteraUrl : kPrimaryUrl);
+	const auto url = QString::fromLatin1(kExteraUrl);
 	LOG(("RCManager: requesting map"));
 
 	clearSentRequest();
@@ -72,17 +70,6 @@ void RCManager::sendRequest() {
 			{
 				gotFailure(e);
 			});
-}
-
-bool RCManager::tryRetryWithExteraFallback() {
-	if (_retryAttempted || _useExteraFallback) {
-		return false;
-	}
-	LOG(("RCManager: switching to extera fallback endpoint"));
-	_useExteraFallback = true;
-	_retryAttempted = true;
-	sendRequest();
-	return true;
 }
 
 void RCManager::gotResponse() {
@@ -215,11 +202,6 @@ bool RCManager::applyResponse(const QByteArray &response) {
 
 void RCManager::gotFailure(QNetworkReply::NetworkError e) {
 	LOG(("RCManager: Error %1").arg(e));
-	if (tryRetryWithExteraFallback()) {
-		LOG(("RCManager: retrying request with extera fallback endpoint"));
-		return;
-	}
-	LOG(("RCManager: no retry left for failed request"));
 	if (const auto reply = base::take(_reply)) {
 		reply->deleteLater();
 	}

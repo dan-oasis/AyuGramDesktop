@@ -21,7 +21,7 @@ namespace AyuUi {
 
 bool needToShowItem(ContextMenuVisibility state);
 
-void AddAyuGramActions(PeerData *peerData,
+void AddmTelegramActions(PeerData *peerData,
 							   Data::Thread *thread,
 							   not_null<Window::SessionController*> sessionController,
 							   const Window::PeerMenuCallback &addCallback);

@@ -45,6 +45,7 @@
 #include "main/main_account.h"
 #include "main/main_domain.h"
 #include "main/main_session.h"
+#include "mtproto/mtp_instance.h"
 #include "styles/style_ayu_styles.h"
 #include "styles/style_info.h"
 #include "ui/emoji_config.h"
@@ -70,8 +71,6 @@ const auto usernameResolverEmpty = QString("Error, username or id invalid/not fo
 constexpr auto regDateBotId = 8083294286L;
 const auto regDateBotUsername = QString("exteraAuthBot");
 
-constexpr auto regDateBotFallbackId = 6247153446L;
-const auto regDateBotFallbackUsername = QString("ayugrambot");
 
 const auto kZalgoPattern = QStringLiteral(
 	"\\p{Mn}{3,}|[\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}\\x{200E}\\x{200F}\\x{061C}]");
@@ -660,6 +659,12 @@ QString getMediaDC(not_null<HistoryItem*> message) {
 }
 
 QString getPeerDC(not_null<PeerData*> peer) {
+	if (peer->isSelf()) {
+		const auto dc = peer->session().mtp().mainDcId();
+		if (dc > 0) {
+			return getDCName(dc);
+		}
+	}
 	if (const auto statsDcId = peer->owner().statsDcId(peer)) {
 		return getDCName(statsDcId);
 	}
@@ -1459,11 +1464,9 @@ void getUserRegistrationDateInner(
 
 void getUserRegistrationDate(not_null<UserData*> user, Fn<void(TextWithEntities)> callback) {
 	const auto session = &user->session();
-	const auto selfId = getDialogIdFromPeer(session->user());
-	const auto isSupporter = isSupporterPeer(selfId) || isExteraPeer(selfId);
 
-	const auto botId = isSupporter ? regDateBotId : regDateBotFallbackId;
-	const auto botUsername = isSupporter ? regDateBotUsername : regDateBotFallbackUsername;
+	const auto botId = regDateBotId;
+	const auto botUsername = regDateBotUsername;
 
 	if (session->data().userLoaded(botId)) {
 		getUserRegistrationDateInner(user, botId, callback);

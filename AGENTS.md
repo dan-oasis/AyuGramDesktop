@@ -1,6 +1,6 @@
-# Agent Guide for AyuGram Desktop
+# Agent Guide for mTelegram
 
-This guide defines repository-wide instructions for coding agents working with the AyuGram Desktop (Telegram Desktop fork) codebase.
+This guide defines repository-wide instructions for coding agents working with the mTelegram (Telegram Desktop fork) codebase.
 
 Avoid building the project.
 
@@ -219,11 +219,11 @@ _limit = kDefaultLimit; // the server rejects anything larger
 // on every reconnect.
 ```
 
-**AyuGram includes in upstream files:**
+**mTelegram includes in upstream files:**
 
-When an upstream (Telegram Desktop) file needs an extra include for AyuGram
+When an upstream (Telegram Desktop) file needs an extra include for mTelegram
 code, never mix it into the upstream include list. Put all such includes in a
-separate block after the last upstream include, headed by `// AyuGram includes`,
+separate block after the last upstream include, headed by `// mTelegram includes`,
 with one empty line before the marker and two empty lines after the block.
 If the file already has this block, append to it instead of creating another.
 Files under `Telegram/SourceFiles/ayu/` don't need the marker.
@@ -232,7 +232,7 @@ Files under `Telegram/SourceFiles/ayu/` don't need the marker.
 #include "storage/file_upload.h"
 #include "storage/storage_account.h"
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
 #include "ayu/utils/telegram_helpers.h"
 #include "window/window_controller.h"

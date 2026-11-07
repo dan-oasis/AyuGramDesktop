@@ -26,7 +26,8 @@ public:
 	ConnectionState(
 		not_null<Ui::RpWidget*> parent,
 		not_null<Main::Account*> account,
-		rpl::producer<bool> shown);
+		rpl::producer<bool> shown,
+		bool showProxyWhenDisabled = false);
 
 	void raise();
 	void setForceHidden(bool hidden);
@@ -82,6 +83,7 @@ private:
 	not_null<Ui::RpWidget*> _parent;
 	rpl::variable<int> _bottomSkip;
 	base::unique_qptr<Widget> _widget;
+	const bool _showProxyWhenDisabled;
 	bool _forceHidden = false;
 	base::Timer _refreshTimer;
 	State _state;

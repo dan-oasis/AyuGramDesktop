@@ -62,8 +62,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <kurlmimedata.h>
 
-// AyuGram includes
-#include "ayu/ui/ayu_logo.h"
+// mTelegram includes
 
 
 namespace Window {
@@ -145,11 +144,12 @@ const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
 const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
 QImage Logo() {
-	return AyuAssets::currentAppLogo();
+	static const auto result = QImage(u":/gui/art/logo_256.png"_q);
+	return result;
 }
 
 QImage LogoNoMargin() {
-	return AyuAssets::currentAppLogo();
+	return LogoTelegramDefault();
 }
 
 const QImage &LogoTelegramDefault() {
@@ -942,7 +942,7 @@ void MainWindow::updateTitle() {
 		: Dialogs::Key();
 	const auto thread = key ? key.thread() : nullptr;
 	if (!thread) {
-		setTitle((user.isEmpty() ? u"AyuGram"_q : user) + added + suffix);
+		setTitle((user.isEmpty() ? u"mTelegram"_q : user) + added + suffix);
 		return;
 	}
 	const auto history = thread->owningHistory();
