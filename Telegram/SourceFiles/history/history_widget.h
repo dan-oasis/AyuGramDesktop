@@ -453,7 +453,6 @@ private:
 	void refreshTopBarActiveChat();
 
 	void refreshJoinChannelText();
-	void refreshGiftToChannelShown();
 	void refreshDirectMessageShown();
 	void requestMessageData(MsgId msgId);
 	void messageDataReceived(not_null<PeerData*> peer, MsgId msgId);
@@ -631,7 +630,6 @@ private:
 	[[nodiscard]] bool hasStashableContent() const;
 	[[nodiscard]] std::unique_ptr<Data::ComposeStash> takeComposeStash();
 	void applyComposeStash(Data::ComposeStash &&stash);
-	void setupGiftToChannelButton();
 	void setupDirectMessageButton();
 
 	void handlePeerMigration();
@@ -940,10 +938,8 @@ private:
 	object_ptr<Ui::FlatButton> _botStart;
 	object_ptr<Ui::FlatButton> _joinChannel;
 	object_ptr<Ui::FlatButton> _muteUnmute;
-	QPointer<Ui::IconButton> _giftToChannel;
 	QPointer<Ui::IconButton> _directMessage;
 	rpl::lifetime _directMessageLifetime;
-	QPointer<Ui::IconButton> _giftToChannelDiscuss;
 	object_ptr<Ui::FlatButton> _discuss;
 	object_ptr<Ui::FlatButton> _reportMessages;
 	std::unique_ptr<HistoryView::BotMenuButton> _botMenu;

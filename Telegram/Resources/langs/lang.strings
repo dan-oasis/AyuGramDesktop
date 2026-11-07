@@ -9421,19 +9421,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_LinksTranslate" = "Translate";
 "ayu_LinksDocumentation" = "Documentation";
 "ayu_CategoriesHeader" = "Categories";
-"ayu_SupportHeader" = "Support";
-"ayu_SupportDescription1" = "Support Development";
-"ayu_SupportDescription2" = "{item} and get an unique badge!";
-"ayu_SupportBoxHeader" = "Support Development";
-"ayu_SupportBoxInfo" = "By supporting the project, you not only contribute to its development but also get a unique badge.";
-"ayu_SupportBoxMakeDonationHeader" = "Make a Donation";
-"ayu_SupportBoxMakeDonationInfo" = "Transfer an amount of {amount1} ({amount2}) to any of the project's payment details. These can be found in the **Other** section of the app settings.";
-"ayu_SupportBoxSendProofHeader" = "Send Proof of Payment";
-"ayu_SupportBoxSendProofInfo" = "Send a photo of the payment confirmation to **{item}**. Make sure the photo clearly shows the amount, date, and time of the transfer.";
-"ayu_SupportBoxReceiveBadgeHeader" = "Receive Your Badge";
-"ayu_SupportBoxReceiveBadgeInfo" = "After payment verification, you will receive a unique badge that will be displayed on your profile and visible to other users.";
 "ayu_CrashReporting" = "Crash Reporting";
-"ayu_CrashReportingDescription" = "When this option is enabled, you'll be prompted to send a report after the app crashes. You can decide whether to send it or not.";
+"ayu_LocalCrashReportDescription" = "Show the crash report after a crash so you can view it and save a copy to a file.";
 "ayu_ResetSettings" = "Reset Settings";
 "ayu_ResetSettingsConfirmation" = "Are you sure you want to reset **all** mTelegram preferences to their defaults?";
 "ayu_DisableColorfulCover" = "Disable adaptive color";
@@ -9570,7 +9559,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_IconDefault" = "Default";
 "ayu_IconDiscord" = "Discord";
 "ayu_IconSpotify" = "Spotify";
-"ayu_IconExtera" = "extera";
 "ayu_IconNothing" = "Nothing";
 "ayu_IconBard" = "Google Bard";
 "ayu_IconYaPlus" = "Yandex Plus";
@@ -9655,7 +9643,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_SuggestGhostModeStoryActionTextNo" = "No";
 "ayu_FirstLaunchAlert" = "mTelegram is **free** software and should only be obtained from our **official sources**. You assume **full responsibility** for using this application with your account.";
 "ayu_LocalPremiumAlert" = "With local Telegram Premium, you won't get increased limits or be able to send animated emojis. Other users won't see your premium emoji and quote color.";
-"ayu_ExteraChatsAlert" = "For help with **mTelegram**, use the project’s issue tracker.";
 "ayu_HideNextViewsDescriptionAyu" = "Hide my views forever, until Ghost Mode is disabled.";
 "ayu_EnableGhostModeStories" = "Enable Ghost Mode";
 "ayu_GhostModeIsActive" = "Ghost Mode is Active";
@@ -9691,13 +9678,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_AyuForwardStatusFinished" = "Done";
 "ayu_AyuForwardStatusSentCount" = "sent {count1} of {count2}";
 "ayu_AyuForwardStatusChunkCount" = "chunk {count1} of {count2}";
-"ayu_CreationDateUserApproximately" = "**{item1}** created their account approximately on **{item2}**.";
-"ayu_CreationDateUserEarlier" = "**{item1}** created their account earlier than **{item2}**.";
-"ayu_CreationDateUserLater" = "**{item1}** created their account later than **{item2}**.";
 "ayu_CreationDateChat" = "**{item1}** was created on **{item2}**.";
-"ayu_CreationDateSelfApproximately" = "You created your account approximately on **{item}**.";
-"ayu_CreationDateSelfEarlier" = "You created your account earlier than **{item}**.";
-"ayu_CreationDateSelfLater" = "You created your account later than **{item}**.";
 "ayu_JoinDateChat" = "You joined **{item1}** on **{item2}**.";
 "ayu_JumpToBeginning" = "To Beginning";
 "ayu_ExpireMediaContextMenuText" = "Burn";
@@ -9731,9 +9712,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_SessionTerminated" = "Session **{item}** was terminated. You may still browse cached messages.";
 "ayu_InvalidConnectionLayerNote" = "You should re-login due to an error during the update.";
 "ayu_LocalPremiumNotice" = "You're using **local** Telegram Premium.\nIt **won't** give you any benefits.\n**Enjoy the star near your nickname!**";
-"ayu_DeveloperPopup" = "**{item}** is a member of the **exteraGram** development team.";
-"ayu_SupporterPopup" = "**{item}** supported the development of **exteraGram** and received an unique badge.";
-"ayu_OfficialResourcePopup" = "**{item}** is the official resource of **exteraGram**.";
 "ayu_MutualContactInfo" = "This contact is mutual.";
 "ayu_SessionInfoOfficialApp" = "Official app";
 "ayu_SettingsWatermark" = "mTelegram is an unofficial Telegram client.";
@@ -9744,5 +9722,5 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_ConfirmationRound" = "Do you want to send this round video?";
 "ayu_IntroAbout" = "Welcome to the mTelegram.\nMake Telegram your own.";
 "ayu_AboutText1" = "ToS breaking Telegram client based on {api_link}.";
-"ayu_UpdateAyuGram" = "Update mTelegram";
+"ayu_UpdateMTelegram" = "Update mTelegram";
 "ayu_UtilityRestartRequired" = "The app will close in 5 seconds.";

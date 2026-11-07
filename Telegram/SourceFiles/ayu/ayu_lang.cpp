@@ -75,21 +75,25 @@ void AyuLanguage::init() {
 }
 
 void AyuLanguage::applyLanguageJson(QJsonDocument doc) {
+	static const auto legacyBrand = QRegularExpression(
+		u"(?:ayu[ -]?gram|radolyn)"_q,
+		QRegularExpression::CaseInsensitiveOption);
+	static const auto legacyPromotion = QRegularExpression(
+		u"(?:extera[ -]?gram|zasto[ -]?gram|boosty\\.to|patreon\\.com|"
+		"buymeacoffee\\.com|ko-fi\\.com|donationalerts\\.com)"_q,
+		QRegularExpression::CaseInsensitiveOption);
 	const auto json = doc.object();
 	for (const QString &brokenKey : json.keys()) {
 		auto key = qsl("ayu_") + brokenKey;
 		auto val = json.value(brokenKey).toString().replace(qsl("&amp;"), qsl("&"));
 
-		static const auto legacyBrand = QRegularExpression(
-			u"(?:ayu[ -]?gram|radolyn)"_q,
-			QRegularExpression::CaseInsensitiveOption);
 		if (key.endsWith("_Android")
+			|| val.contains(legacyPromotion)
 			|| (val.contains(legacyBrand)
 				&& (val.contains(u"https://"_q)
 					|| val.contains(u"tg://"_q)
 					|| val.contains('@')))
-			|| key == u"ayu_SettingsWatermark"_q
-			|| key == u"ayu_ExteraChatsAlert"_q) {
+			|| key == u"ayu_SettingsWatermark"_q) {
 			continue;
 		}
 

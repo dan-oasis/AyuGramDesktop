@@ -12,9 +12,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QCheckBox>
-#include <QtNetwork/QNetworkReply>
-#include <QtNetwork/QHttpMultiPart>
-#include <QtNetwork/QNetworkAccessManager>
 
 namespace MTP {
 struct ProxyData;
@@ -102,15 +99,9 @@ public:
 	}
 
 	void saveReport();
-	void sendReport();
 
 	void networkSettings();
 	void processContinue();
-
-	void checkingFinished();
-	void sendingError(QNetworkReply::NetworkError e);
-	void sendingFinished();
-	void sendingProgress(qint64 uploaded, qint64 total);
 
 	void updateRetry();
 	void updateSkip();
@@ -121,19 +112,17 @@ protected:
 
 private:
 	void proxyUpdated();
-	QString minidumpFileName();
 	void updateControls();
 
 	void excludeReportUsername();
 
 	QString getReportField(const QLatin1String &name, const QLatin1String &prefix);
-	void addReportFieldPart(const QLatin1String &name, const QLatin1String &prefix, QHttpMultiPart *multipart);
 
 	QByteArray _dumpraw;
 
 	PreLaunchLabel _label, _pleaseSendReport, _yourReportName, _minidump;
 	PreLaunchLog _report;
-	PreLaunchButton _send, _sendSkip, _networkSettings, _continue, _showReport, _saveReport, _getApp;
+	PreLaunchButton _networkSettings, _continue, _showReport, _saveReport, _getApp;
 	PreLaunchCheckbox _includeUsername;
 
 	QString _minidumpName, _minidumpFull, _reportText;
@@ -147,20 +136,11 @@ private:
 		SendingUpdateCheck,
 		SendingNone,
 		SendingTooOld,
-		SendingTooMany,
 		SendingUnofficial,
-		SendingProgress,
-		SendingUploading,
-		SendingFail,
-		SendingDone,
 	};
 	SendingState _sendingState;
 
 	PreLaunchLabel _updating;
-
-	QNetworkAccessManager _sendManager;
-	QNetworkReply *_checkReply = nullptr;
-	QNetworkReply *_sendReply = nullptr;
 
 	enum UpdatingState {
 		UpdatingNone,

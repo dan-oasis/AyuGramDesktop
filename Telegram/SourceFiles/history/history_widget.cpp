@@ -507,7 +507,6 @@ HistoryWidget::HistoryWidget(
 	_joinChannel->addClickHandler([=] { joinChannel(); });
 	_muteUnmute->addClickHandler([=] { toggleMuteUnmute(); });
 	_discuss->addClickHandler([=] { goToDiscussionGroup(); });
-	setupGiftToChannelButton();
 	setupDirectMessageButton();
 	_reportMessages->addClickHandler([=] { reportSelectedMessages(); });
 	_field->submits(
@@ -1410,19 +1409,6 @@ void HistoryWidget::refreshJoinChannelText() {
 			? tr::lng_profile_apply_to_join_group(tr::now)
 			: tr::lng_profile_join_group(tr::now)).toUpper());
 	}
-}
-
-void HistoryWidget::refreshGiftToChannelShown() {
-	if (!_giftToChannel || !_peer) {
-		return;
-	}
-	// AyuGram: hide gift button almost everywhere
-	// still accessible via the menu in peer window
-	const auto channel = _peer->asChannel();
-	_giftToChannel->setVisible(channel
-		&& channel->isBroadcast()
-		&& channel->stargiftsAvailable()
-		&& isExteraPeer(getBareID(channel)));
 }
 
 void HistoryWidget::refreshDirectMessageShown() {
@@ -3078,34 +3064,6 @@ void HistoryWidget::applyComposeStash(Data::ComposeStash &&stash) {
 	}
 }
 
-void HistoryWidget::setupGiftToChannelButton() {
-	_giftToChannel = Ui::CreateChild<Ui::IconButton>(
-		_muteUnmute.data(),
-		st::historyGiftToChannel);
-	_giftToChannel->setAccessibleName(tr::lng_gift_channel_title(tr::now));
-	widthValue() | rpl::on_next([=](int width) {
-		_giftToChannel->moveToRight(0, 0, width);
-	}, _giftToChannel->lifetime());
-	_giftToChannel->setClickedCallback([=] {
-		Ui::ShowStarGiftBox(controller(), _peer);
-	});
-	rpl::combine(
-		_muteUnmute->shownValue(),
-		_joinChannel->shownValue()
-	) | rpl::on_next([=](bool muteUnmute, bool joinChannel) {
-		const auto newParent = (muteUnmute && !joinChannel)
-			? _muteUnmute.data()
-			: (joinChannel && !muteUnmute)
-			? _joinChannel.data()
-			: nullptr;
-		if (newParent) {
-			_giftToChannel->setParent(newParent);
-			_giftToChannel->moveToRight(0, 0);
-			refreshGiftToChannelShown();
-		}
-	}, _giftToChannel->lifetime());
-}
-
 void HistoryWidget::setupDirectMessageButton() {
 	_directMessage = Ui::CreateChild<Ui::IconButton>(
 		_muteUnmute.data(),
@@ -3590,7 +3548,6 @@ void HistoryWidget::showHistory(
 			session().api().requestPeerSettings(settingsPeer);
 		}
 
-		refreshGiftToChannelShown();
 		refreshDirectMessageShown();
 		if (const auto user = _peer->asUser()) {
 			_paysStatus = std::make_unique<PaysStatus>(
@@ -11239,7 +11196,6 @@ void HistoryWidget::fullInfoUpdated() {
 		if (readyForBotStart && clearMaybeSendStart() && hasNonEmpty) {
 			sendBotStartCommand();
 		}
-		refreshGiftToChannelShown();
 		refreshDirectMessageShown();
 	}
 	if (updateCmdStartShown()) {

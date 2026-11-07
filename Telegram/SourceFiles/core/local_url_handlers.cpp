@@ -2042,10 +2042,6 @@ const std::vector<LocalUrlHandler> &LocalUrlHandlers() {
 			AyuUrlHandlers::HandleAyu
 		},
 		{
-			u"^(support)|(donate)$"_q,
-			AyuUrlHandlers::HandleSupport
-		},
-		{
 			u"^([^\\?]+)(\\?|#|$)"_q,
 			HandleUnknown
 		},
@@ -2287,8 +2283,8 @@ QString TryConvertUrlToLocal(QString url) {
 			}
 			return base + added + (params.isEmpty() ? QString() : '&' + params);
 		} else if (const auto ayuSettingsMatch = regex_match(
-			u"^(?:ayuSettings|exteraSettings)/?\\?(.+)$"_q, query, matchOptions)) {
-			return u"tg://ayusettings?"_q + ayuSettingsMatch->captured(1);
+			u"^(?:mtelegramsettings|ayusettings)/?\\?(.+)$"_q, query, matchOptions)) {
+			return u"tg://mtelegramsettings?"_q + ayuSettingsMatch->captured(1);
 		} else if (regex_match(u"^getpremium(/|\\?|#|$)"_q, query, matchOptions)) {
 			return GetPremiumLocalUrl(query);
 		} else if (const auto usernameMatch = regex_match(u"^"

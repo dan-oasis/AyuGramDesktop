@@ -53,7 +53,7 @@ const auto kClientHeader = qstr("\x17\x03\x03");
 base::options::toggle OptionRotateFakeTls({
 	.id = kOptionRotateFakeTls,
 	.name = "Rotate FakeTLS profiles",
-	.description = "Try the ZaStoGram profile pool when an advanced FakeTLS hello gets no response.",
+	.description = "Try another TLS profile when an advanced FakeTLS hello gets no response.",
 	.restartRequired = true,
 });
 

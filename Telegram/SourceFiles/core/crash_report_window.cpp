@@ -302,8 +302,6 @@ LastCrashedWindow::LastCrashedWindow(
 , _yourReportName(this)
 , _minidump(this)
 , _report(this)
-, _send(this)
-, _sendSkip(this, false)
 , _networkSettings(this)
 , _continue(this)
 , _showReport(this)
@@ -476,7 +474,7 @@ LastCrashedWindow::LastCrashedWindow(
 		}
 	}
 
-	_pleaseSendReport.setText(u"Please send us a crash report."_q);
+	_pleaseSendReport.setText(u"Crash report available."_q);
 	_yourReportName.setText(u"Crash ID: %1"_q.arg(QString(_minidumpName).replace(".dmp", "")));
 	_yourReportName.setCursor(style::cur_text);
 	_yourReportName.setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -500,11 +498,6 @@ LastCrashedWindow::LastCrashedWindow(
 		QDesktopServices::openUrl(u"https://github.com/dan-oasis/AyuGramDesktop"_q);
 	});
 
-	_send.setText(u"SEND CRASH REPORT"_q);
-	connect(&_send, &QPushButton::clicked, [=] { sendReport(); });
-
-	_sendSkip.setText(u"SKIP"_q);
-	connect(&_sendSkip, &QPushButton::clicked, [=] { processContinue(); });
 	_continue.setText(u"CONTINUE"_q);
 	connect(&_continue, &QPushButton::clicked, [=] { processContinue(); });
 
@@ -569,116 +562,6 @@ QString LastCrashedWindow::getReportField(const QLatin1String &name, const QLati
 	return QString();
 }
 
-void LastCrashedWindow::addReportFieldPart(const QLatin1String &name, const QLatin1String &prefix, QHttpMultiPart *multipart) {
-	QString data = getReportField(name, prefix);
-	if (!data.isEmpty()) {
-		QHttpPart reportPart;
-		reportPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(u"form-data; name=\"%1\""_q.arg(name)));
-		reportPart.setBody(data.toUtf8());
-		multipart->append(reportPart);
-	}
-}
-
-void LastCrashedWindow::sendReport() {
-	if (_checkReply) {
-		_checkReply->deleteLater();
-		_checkReply = nullptr;
-	}
-	if (_sendReply) {
-		_sendReply->deleteLater();
-		_sendReply = nullptr;
-	}
-
-	checkingFinished();
-
-	_pleaseSendReport.setText(u"Sending crash report..."_q);
-	_sendingState = SendingProgress;
-	_reportShown = false;
-	updateControls();
-}
-
-QString LastCrashedWindow::minidumpFileName() {
-	QFileInfo dmpFile(_minidumpFull);
-	if (dmpFile.exists() && dmpFile.size() > 0 && dmpFile.size() < 20 * 1024 * 1024 &&
-		QRegularExpression(u"^[a-zA-Z0-9\\-]{1,64}\\.dmp$"_q).match(dmpFile.fileName()).hasMatch()) {
-		return dmpFile.fileName();
-	}
-	return QString();
-}
-
-void LastCrashedWindow::checkingFinished() {
-	if (_sendReply) return;
-
-	auto multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-
-	{
-		QString version = getReportField(qstr("version"), qstr("Version:"));
-		if (!version.isEmpty()) {
-			const auto sentryVersion = QString("mtelegram-desktop@%1").arg(version);
-
-			QHttpPart reportPart;
-			reportPart.setHeader(QNetworkRequest::ContentDispositionHeader,
-			                     QVariant(u"form-data; name=\"%1\""_q.arg("sentry[release]")));
-			reportPart.setBody(sentryVersion.toUtf8());
-			multipart->append(reportPart);
-		}
-	}
-
-	{
-		QString dumpFile = minidumpFileName();
-		if (!dumpFile.isEmpty()) {
-			const auto dumpId = dumpFile.replace(".dmp", "");
-
-			QHttpPart reportPart;
-			reportPart.setHeader(QNetworkRequest::ContentDispositionHeader,
-			                     QVariant(u"form-data; name=\"%1\""_q.arg("sentry[tags][dump-id]")));
-			reportPart.setBody(dumpId.toUtf8());
-			multipart->append(reportPart);
-		}
-	}
-
-	QHttpPart reportPart;
-	reportPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/octet-stream"));
-	reportPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"report\"; filename=\"report.txt\""));
-	reportPart.setBody(getCrashReportRaw());
-	multipart->append(reportPart);
-
-	QString dmpName = minidumpFileName();
-	if (!dmpName.isEmpty()) {
-		QFile file(_minidumpFull);
-		if (file.open(QIODevice::ReadOnly)) {
-			QByteArray minidump = file.readAll();
-			file.close();
-
-			QHttpPart dumpPart;
-			dumpPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/octet-stream"));
-			dumpPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(u"form-data; name=\"upload_file_minidump\"; filename=\"%1\""_q.arg(dmpName)));
-			dumpPart.setBody(minidump);
-			multipart->append(dumpPart);
-
-			_minidump.setText(u"+ %1 (%2 KB)"_q.arg(dmpName).arg(minidump.size() / 1024));
-		}
-	}
-
-	_sendReply = _sendManager.post(QNetworkRequest(u"https://sentry.radolyn.com/api/2/minidump/?sentry_key=cad638b2ec4a692e57c3dcc4af1508bf"_q), multipart);
-	multipart->setParent(_sendReply);
-
-	connect(
-		_sendReply,
-		&QNetworkReply::errorOccurred,
-		[=](QNetworkReply::NetworkError code) { sendingError(code); });
-	connect(
-		_sendReply,
-		&QNetworkReply::finished,
-		[=] { sendingFinished(); });
-	connect(
-		_sendReply,
-		&QNetworkReply::uploadProgress,
-		[=](qint64 sent, qint64 total) { sendingProgress(sent, total); });
-
-	updateControls();
-}
-
 void LastCrashedWindow::updateControls() {
 	int padding = _size, h = padding + _networkSettings.height() + padding;
 
@@ -689,8 +572,6 @@ void LastCrashedWindow::updateControls() {
 			_networkSettings.show();
 			_updaterData->check.show();
 			_updaterData->skip.show();
-			_send.hide();
-			_sendSkip.hide();
 			_continue.hide();
 			_pleaseSendReport.hide();
 			_yourReportName.hide();
@@ -702,9 +583,7 @@ void LastCrashedWindow::updateControls() {
 			_saveReport.hide();
 			h += padding + _updaterData->check.height() + padding;
 		} else {
-			if (_updaterData->state == UpdatingCheck
-				|| _sendingState == SendingFail
-				|| _sendingState == SendingProgress) {
+			if (_updaterData->state == UpdatingCheck) {
 				_networkSettings.show();
 			} else {
 				_networkSettings.hide();
@@ -722,8 +601,6 @@ void LastCrashedWindow::updateControls() {
 					_report.hide();
 					_minidump.hide();
 					_saveReport.hide();
-					_send.hide();
-					_sendSkip.hide();
 					_continue.show();
 				} else {
 					h += _showReport.height() + padding + _yourReportName.height() + padding;
@@ -754,8 +631,6 @@ void LastCrashedWindow::updateControls() {
 						_report.hide();
 						_minidump.hide();
 						_saveReport.hide();
-						_send.hide();
-						_sendSkip.hide();
 						_continue.show();
 					} else {
 						_getApp.hide();
@@ -767,35 +642,15 @@ void LastCrashedWindow::updateControls() {
 							} else {
 								_minidump.show();
 							}
-							if (_reportSaved || _sendingState == SendingFail || _sendingState == SendingProgress || _sendingState == SendingUploading) {
-								_saveReport.hide();
-							} else {
-								_saveReport.show();
-							}
+							_saveReport.setVisible(!_reportSaved);
 							_showReport.hide();
 						} else {
 							_report.hide();
 							_minidump.hide();
 							_saveReport.hide();
-							if (_sendingState == SendingFail || _sendingState == SendingProgress || _sendingState == SendingUploading) {
-								_showReport.hide();
-							} else {
-								_showReport.show();
-							}
+							_showReport.show();
 						}
-						if (_sendingState == SendingTooMany || _sendingState == SendingDone) {
-							_send.hide();
-							_sendSkip.hide();
-							_continue.show();
-						} else {
-							if (_sendingState == SendingProgress || _sendingState == SendingUploading) {
-								_send.hide();
-							} else {
-								_send.show();
-							}
-							_sendSkip.show();
-							_continue.hide();
-						}
+						_continue.show();
 					}
 				}
 			} else {
@@ -807,8 +662,6 @@ void LastCrashedWindow::updateControls() {
 				_report.hide();
 				_minidump.hide();
 				_saveReport.hide();
-				_send.hide();
-				_sendSkip.hide();
 				_continue.hide();
 			}
 			_updaterData->check.hide();
@@ -822,7 +675,7 @@ void LastCrashedWindow::updateControls() {
 		}
 	} else {
 		h += _networkSettings.height() + padding;
-		h += padding + _send.height() + padding;
+		h += padding + _continue.height() + padding;
 		if (_sendingState == SendingNoReport) {
 			_pleaseSendReport.hide();
 			_yourReportName.hide();
@@ -831,8 +684,6 @@ void LastCrashedWindow::updateControls() {
 			_report.hide();
 			_minidump.hide();
 			_saveReport.hide();
-			_send.hide();
-			_sendSkip.hide();
 			_continue.show();
 			_networkSettings.hide();
 		} else {
@@ -854,40 +705,15 @@ void LastCrashedWindow::updateControls() {
 					_minidump.show();
 				}
 				_showReport.hide();
-				if (_reportSaved || _sendingState == SendingFail || _sendingState == SendingProgress || _sendingState == SendingUploading) {
-					_saveReport.hide();
-				} else {
-					_saveReport.show();
-				}
+				_saveReport.setVisible(!_reportSaved);
 			} else {
 				_report.hide();
 				_minidump.hide();
 				_saveReport.hide();
-				if (_sendingState == SendingFail || _sendingState == SendingProgress || _sendingState == SendingUploading) {
-					_showReport.hide();
-				} else {
-					_showReport.show();
-				}
+				_showReport.show();
 			}
-			if (_sendingState == SendingDone) {
-				_send.hide();
-				_sendSkip.hide();
-				_continue.show();
-				_networkSettings.hide();
-			} else {
-				if (_sendingState == SendingProgress || _sendingState == SendingUploading) {
-					_send.hide();
-				} else {
-					_send.show();
-				}
-				_sendSkip.show();
-				if (_sendingState == SendingFail) {
-					_networkSettings.show();
-				} else {
-					_networkSettings.hide();
-				}
-				_continue.hide();
-			}
+			_networkSettings.hide();
+			_continue.show();
 		}
 
 		_getApp.show();
@@ -929,9 +755,6 @@ void LastCrashedWindow::proxyUpdated() {
 		checker.stop();
 		cSetLastUpdateCheck(0);
 		checker.start();
-	} else if (_sendingState == SendingFail
-		|| _sendingState == SendingProgress) {
-		sendReport();
 	}
 	activate();
 }
@@ -1018,49 +841,6 @@ void LastCrashedWindow::processContinue() {
 	close();
 }
 
-void LastCrashedWindow::sendingError(QNetworkReply::NetworkError e) {
-	LOG(("Crash report sending error: %1").arg(e));
-
-	_pleaseSendReport.setText(u"Sending crash report failed :("_q);
-	_sendingState = SendingFail;
-	if (_checkReply) {
-		_checkReply->deleteLater();
-		_checkReply = nullptr;
-	}
-	if (_sendReply) {
-		_sendReply->deleteLater();
-		_sendReply = nullptr;
-	}
-	updateControls();
-}
-
-void LastCrashedWindow::sendingFinished() {
-	if (_sendReply) {
-		QByteArray result = _sendReply->readAll();
-		LOG(("Crash report sending done, result: %1").arg(QString::fromUtf8(result)));
-
-		_sendReply->deleteLater();
-		_sendReply = nullptr;
-		_pleaseSendReport.setText(u"Thank you for your report!"_q);
-		_sendingState = SendingDone;
-		updateControls();
-
-		CrashReports::Restart();
-	}
-}
-
-void LastCrashedWindow::sendingProgress(qint64 uploaded, qint64 total) {
-	if (_sendingState != SendingProgress && _sendingState != SendingUploading) return;
-	_sendingState = SendingUploading;
-
-	if (total < 0) {
-		_pleaseSendReport.setText(u"Sending crash report %1 KB..."_q.arg(uploaded / 1024));
-	} else {
-		_pleaseSendReport.setText(u"Sending crash report %1 / %2 KB..."_q.arg(uploaded / 1024).arg(total / 1024));
-	}
-	updateControls();
-}
-
 void LastCrashedWindow::closeEvent(QCloseEvent *e) {
 	deleteLater();
 
@@ -1075,13 +855,6 @@ void LastCrashedWindow::resizeEvent(QResizeEvent *e) {
 	int padding = _size;
 	_label.move(padding, padding + (_networkSettings.height() - _label.height()) / 2);
 
-	_send.move(width() - padding - _send.width(), height() - padding - _send.height());
-	if (_sendingState == SendingProgress || _sendingState == SendingUploading) {
-		_sendSkip.move(width() - padding - _sendSkip.width(), height() - padding - _sendSkip.height());
-	} else {
-		_sendSkip.move(width() - padding - _send.width() - padding - _sendSkip.width(), height() - padding - _sendSkip.height());
-	}
-
 	_updating.move(padding, padding * 2 + _networkSettings.height() + (_networkSettings.height() - _updating.height()) / 2);
 
 	if (_updaterData) {
@@ -1091,11 +864,7 @@ void LastCrashedWindow::resizeEvent(QResizeEvent *e) {
 		_includeUsername.move(padding, _yourReportName.y() + _yourReportName.height() + padding);
 		_getApp.move((width() - _getApp.width()) / 2, _showReport.y() + _showReport.height() + padding);
 
-		if (_sendingState == SendingFail || _sendingState == SendingProgress) {
-			_networkSettings.move(padding * 2 + _pleaseSendReport.width(), padding * 2 + _networkSettings.height() + _networkSettings.height() + padding);
-		} else {
-			_networkSettings.move(padding * 2 + _updating.width(), padding * 2 + _networkSettings.height());
-		}
+		_networkSettings.move(padding * 2 + _updating.width(), padding * 2 + _networkSettings.height());
 
 		if (_updaterData->state == UpdatingCheck
 			|| _updaterData->state == UpdatingDownload) {

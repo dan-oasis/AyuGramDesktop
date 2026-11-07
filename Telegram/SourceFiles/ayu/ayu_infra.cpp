@@ -14,7 +14,6 @@
 #include "features/translator/ayu_translator.h"
 #include "lang/lang_instance.h"
 #include "ui/chat/chat_style_radius.h"
-#include "utils/rc_manager.h"
 
 namespace AyuInfra {
 
@@ -46,10 +45,6 @@ void initWorker() {
 	AyuWorker::initialize();
 }
 
-void initRCManager() {
-	RCManager::getInstance().start();
-}
-
 void initTranslator() {
 	Ayu::Translator::TranslateManager::init();
 }
@@ -59,7 +54,6 @@ void init() {
 	initDatabase();
 	initUiSettings();
 	initWorker();
-	initRCManager();
 	initTranslator();
 }
 
