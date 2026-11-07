@@ -102,6 +102,29 @@ jobs:
           call "%BUILD_ROOT%\tdesktop\Telegram\build\prepare\win.bat" skip-release qt6
           if errorlevel 1 exit /b 1
 
+      - name: Prepare Qt WebSockets
+        working-directory: TBuild/tdesktop
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $qtVersion = python -c "import os, sys; sys.path.insert(0, 'Telegram/build'); from qt_version import resolve; resolve('x64'); print(os.environ['QT'])" | Select-Object -Last 1
+          if ($LASTEXITCODE -ne 0 -or $qtVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'Could not resolve Qt version' }
+          $prefix = Join-Path $env:BUILD_ROOT "Libraries\win64\Qt-$qtVersion"
+          $package = Join-Path $prefix 'lib\cmake\Qt6WebSockets\Qt6WebSocketsConfig.cmake'
+          if (-not (Test-Path $package)) {
+            $module = Join-Path $env:BUILD_ROOT 'qtwebsockets-src'
+            $build = Join-Path $env:BUILD_ROOT 'qtwebsockets-build'
+            git clone --depth 1 --branch "v$qtVersion" https://github.com/qt/qtwebsockets.git $module
+            if ($LASTEXITCODE -ne 0) { throw 'Could not fetch Qt WebSockets' }
+            New-Item -ItemType Directory -Force $build | Out-Null
+            Set-Location $build
+            & (Join-Path $prefix 'bin\qt-configure-module.bat') $module -G Ninja -- -DCMAKE_BUILD_TYPE=Debug -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF
+            if ($LASTEXITCODE -ne 0) { throw 'Could not configure Qt WebSockets' }
+            cmake --build . --parallel 2
+            if ($LASTEXITCODE -ne 0) { throw 'Could not compile Qt WebSockets' }
+            cmake --install . --prefix $prefix
+            if ($LASTEXITCODE -ne 0 -or -not (Test-Path $package)) { throw 'Could not install Qt WebSockets' }
+          }
+
       - name: Configure personal Debug build
         shell: cmd
         working-directory: TBuild/tdesktop/Telegram
@@ -111,6 +134,7 @@ jobs:
             -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 ^
             -D CMAKE_CONFIGURATION_TYPES=Debug ^
             -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
+            -D MTELEGRAM_REQUIRE_WSS=ON ^
             -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
           if errorlevel 1 exit /b 1
 

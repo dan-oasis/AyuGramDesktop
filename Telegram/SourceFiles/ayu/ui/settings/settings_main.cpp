@@ -19,6 +19,7 @@
 #include "core/version.h"
 #include "settings/settings_builder.h"
 #include "settings/settings_common.h"
+#include "settings/settings_experimental.h"
 #include "styles/style_ayu_settings.h"
 #include "styles/style_layers.h"
 #include "styles/style_menu_icons.h"
@@ -97,6 +98,12 @@ void BuildCategories(SectionBuilder &builder) {
 	builder.addSkip();
 
 	builder.addSubsectionTitle(tr::ayu_CategoriesHeader());
+
+	builder.addSectionButton({
+		.title = rpl::single(u"mTelegram tools and transport"_q),
+		.targetSection = Experimental::Id(),
+		.icon = { &st::menuIconManage },
+	});
 
 	builder.addSectionButton({
 		.title = rpl::single(QString("mTelegram")),

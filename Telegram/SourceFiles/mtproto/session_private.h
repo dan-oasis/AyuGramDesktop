@@ -147,7 +147,8 @@ private:
 		DcOptions::Variants::Protocol protocol,
 		const QString &ip,
 		int port,
-		const bytes::vector &protocolSecret);
+		const bytes::vector &protocolSecret,
+		bool websocket = false);
 
 	// if badTime received - search for ids in sessionData->haveSent and sessionData->wereAcked and sync time/salt, return true if found
 	bool requestsFixTimeSalt(const QVector<MTPlong> &ids, const OuterInfo &info);
@@ -188,6 +189,10 @@ private:
 	const ShiftedDcId _shiftedDcId = 0;
 	DcType _realDcType = DcType();
 	DcType _currentDcType = DcType();
+#ifdef MTELEGRAM_HAS_WSS
+	crl::time _wssFallbackUntil = 0;
+	bool _usingNativeWss = false;
+#endif
 
 	mutable QReadWriteLock _stateMutex;
 	int _state = DisconnectedState;
@@ -245,6 +250,7 @@ private:
 };
 
 extern const char kOptionPreferIPv6[];
+extern const char kOptionNativeWss[];
 
 } // namespace details
 } // namespace MTP

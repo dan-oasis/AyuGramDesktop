@@ -20,7 +20,8 @@ public:
 	TcpConnection(
 		not_null<Instance*> instance,
 		QThread *thread,
-		const ProxyData &proxy);
+		const ProxyData &proxy,
+		bool websocket = false);
 
 	ConnectionPointer clone(const ProxyData &proxy) override;
 
@@ -64,6 +65,7 @@ private:
 	void ensureAvailableInBuffer(int amount);
 
 	const not_null<Instance*> _instance;
+	const bool _websocket;
 	std::unique_ptr<AbstractSocket> _socket;
 	bool _connectionStarted = false;
 

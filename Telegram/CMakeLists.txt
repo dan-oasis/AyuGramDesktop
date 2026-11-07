@@ -76,6 +76,26 @@ include(cmake/test_wallet_phrase_shares.cmake)
 
 set_target_properties(Telegram PROPERTIES AUTOMOC ON)
 
+option(MTELEGRAM_REQUIRE_WSS "Require native WebSocket transport" OFF)
+if (QT_VERSION_MAJOR EQUAL 6)
+    if (MTELEGRAM_REQUIRE_WSS)
+        find_package(Qt6WebSockets 6.5 REQUIRED CONFIG HINTS "${Qt6_DIR}/..")
+    else()
+        find_package(Qt6WebSockets 6.5 QUIET CONFIG HINTS "${Qt6_DIR}/..")
+    endif()
+elseif (MTELEGRAM_REQUIRE_WSS)
+    message(FATAL_ERROR "Native WSS requires Qt 6.5 or newer")
+endif()
+if (TARGET Qt6::WebSockets)
+    nice_target_sources(Telegram ${src_loc}
+    PRIVATE
+        mtproto/details/mtproto_wss_socket.cpp
+        mtproto/details/mtproto_wss_socket.h
+    )
+    target_link_libraries(Telegram PRIVATE Qt6::WebSockets)
+    target_compile_definitions(Telegram PRIVATE MTELEGRAM_HAS_WSS)
+endif()
+
 target_link_libraries(Telegram
 PRIVATE
     tdesktop::lib_fido2
@@ -2595,6 +2615,8 @@ PRIVATE
     window/window_media_preview.h
     window/window_no_paid_token.cpp
     window/window_no_paid_token.h
+    window/mtelegram_tools.cpp
+    window/mtelegram_tools.h
     window/window_peer_menu.cpp
     window/window_peer_menu.h
     window/window_restore_shell.cpp

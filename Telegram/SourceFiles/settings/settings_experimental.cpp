@@ -48,8 +48,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mainwidget.h"
 #include "media/player/media_player_instance.h"
 #include "mtproto/session_private.h"
+#include "mtproto/details/mtproto_tls_socket.h"
 #include "webview/webview_embed.h"
 #include "window/main_window.h"
+#include "window/mtelegram_tools.h"
 #include "window/window_filters_favorite.h"
 #include "window/window_peer_menu.h"
 #include "window/window_session_controller.h"
@@ -457,6 +459,20 @@ void SetupExperimental(
 	};
 	const auto categories = std::vector<Category>{
 		{
+			u"mTelegram tools"_q,
+			{
+				MTelegram::kFastAnswers,
+				MTelegram::kFavoriteChats,
+				MTelegram::kSubfolders,
+				MTelegram::kProxySubscriptions,
+				MTelegram::kFormattedCopy,
+				MTelegram::kAdvancedSearch,
+				MTelegram::kJumpCommands,
+				MTelegram::kModerationNotes,
+				MTelegram::kQuickTranslate,
+			}
+		},
+		{
 			u"Chats"_q,
 			{
 				Dialogs::kOptionForumHideChatsList,
@@ -532,6 +548,11 @@ void SetupExperimental(
 			u"System"_q,
 			{
 				MTP::details::kOptionPreferIPv6,
+				MTP::details::kOptionAdvancedFakeTls,
+				MTP::details::kOptionRotateFakeTls,
+#ifdef MTELEGRAM_HAS_WSS
+				MTP::details::kOptionNativeWss,
+#endif
 				Core::kOptionSkipUrlSchemeRegister,
 				Core::kOptionDeadlockDetector,
 				Webview::kOptionWebviewDebugEnabled,

@@ -8,6 +8,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "boxes/translate_box.h"
 #include "boxes/translate_box_content.h"
 #include "lang/translate_provider.h"
+#include "lang/translate_mtproto_provider.h"
+#include "window/mtelegram_tools.h"
 
 #include "base/weak_ptr.h"
 #include "core/application.h"
@@ -454,7 +456,9 @@ void TranslateBox(
 		bool hasCopyRestriction) {
 	struct State {
 		State(not_null<Main::Session*> session)
-		: provider(CreateTranslateProvider(session)) {
+		: provider(MTelegram::Enabled(MTelegram::kQuickTranslate)
+			? CreateMTProtoTranslateProvider(session)
+			: CreateTranslateProvider(session)) {
 		}
 
 		std::unique_ptr<TranslateProvider> provider;
