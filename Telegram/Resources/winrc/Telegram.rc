@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,3,5,0
- PRODUCTVERSION 7,3,5,0
+ FILEVERSION 7,4,1,0
+ PRODUCTVERSION 7,4,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,10 +69,10 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "mTelegram"
             VALUE "FileDescription", "mTelegram"
-            VALUE "FileVersion", "7.3.5.0"
+            VALUE "FileVersion", "7.4.1.0"
             VALUE "LegalCopyright", "Copyright (C) 2014-2026"
             VALUE "ProductName", "mTelegram"
-            VALUE "ProductVersion", "7.3.5.0"
+            VALUE "ProductVersion", "7.4.1.0"
         END
     END
     BLOCK "VarFileInfo"

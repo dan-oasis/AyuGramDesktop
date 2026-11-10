@@ -36,7 +36,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $modules = @{
-            lib_ui = 'c3f7343fdf16d212fcb31962bf267970481e00fc'
+            lib_ui = '42c6f1e88db81e6d9e8006f3e7b1c3ba39f9cac4'
             codegen = 'dbd1d53137cd581cfdbeebe93bcaf54abf55ec74'
           }
           foreach ($name in $modules.Keys) {
@@ -94,6 +94,7 @@ jobs:
           restore-keys: |
             windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-42062979528
             windows-x64-msvc1444-qt6-debug-${{ hashFiles('TBuild/tdesktop/Telegram/build/prepare/**', 'TBuild/tdesktop/Telegram/build/qt_version.py') }}-42030330345
+            windows-x64-msvc1444-qt6-debug-ee4d481a0109ca2846167b76ff8a8f83d29589f82a080c4f6de769071da4ed65-complete-v2
 
       - name: Prepare Debug libraries
         id: prepare_libraries
