@@ -34,7 +34,7 @@ using namespace AyuBuilder;
 namespace {
 
 void BuildTranslator(SectionBuilder &builder, AyuSectionBuilder &ayu) {
-	builder.addSubsectionTitle(tr::lng_translate_settings_subtitle());
+	builder.addSubsectionTitle(tr::lng_context_translate());
 
 	auto *settings = &AyuSettings::getInstance();
 
