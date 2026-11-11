@@ -10,12 +10,18 @@
 
 class QJsonDocument;
 
+namespace Lang {
+class Instance;
+} // namespace Lang
+
 class AyuLanguage {
 public:
 	static void init();
+	static void applyBuiltIn(Lang::Instance &language);
 
 private:
 	static void applyLanguageJson(QJsonDocument doc);
 	static QString getCacheDir();
 	static QString getCachePath(const QString &langId);
+
 };

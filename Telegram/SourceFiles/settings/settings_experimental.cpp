@@ -44,6 +44,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/profile/tabs/adapters/info_profile_tab_media.h"
 #include "info/profile/tabs/info_profile_tabs_host.h"
 #include "lang/lang_keys.h"
+#include "lang/lang_instance.h"
+#include "lang_auto_counts.h"
 #include "mainwindow.h"
 #include "mainwidget.h"
 #include "media/player/media_player_instance.h"
@@ -76,6 +78,18 @@ namespace Settings {
 namespace {
 
 const auto kOptionsClipboardPrefix = u"tdesktop-flags:"_q;
+
+[[nodiscard]] QString OptionText(
+		QString id,
+		const QString &suffix,
+		const QString &fallback) {
+	const auto key = (u"ayu_Experimental_"_q
+		+ id.replace('-', '_') + suffix).toLatin1();
+	const auto index = Lang::GetKeyIndex(QLatin1String(key));
+	return (index != Lang::kKeysCount)
+		? Lang::GetInstance().getValue(index)
+		: fallback;
+}
 
 struct DecodeOptionsResult {
 	bool ok = false;
@@ -182,10 +196,10 @@ void SetupCopyDeepLink(
 		*menu = base::make_unique_q<Ui::PopupMenu>(
 			button,
 			st::popupMenuWithIcons);
-		(*menu)->addAction(u"Copy deep link"_q, [=] {
+		(*menu)->addAction(tr::lng_context_copy_link(tr::now), [=] {
 			TextUtilities::SetClipboardText({ link });
 			window->showToast({
-				.text = { u"Deep link copied to clipboard."_q },
+				.text = { tr::lng_channel_public_link_copied(tr::now) },
 				.iconLottie = u"toast/voip_invite"_q,
 				.iconLottieSize = st::toastLottieIconSize,
 			});
@@ -255,8 +269,10 @@ QString AddOption(
 		rpl::producer<> reloadOptionsRequests,
 		rpl::producer<QString> query,
 		Fn<void(const QString&, not_null<QWidget*>)> registerHighlight) {
-	const auto name = option.name().isEmpty() ? option.id() : option.name();
-	const auto &description = option.description();
+	const auto name = OptionText(option.id(), u"_Name"_q,
+		option.name().isEmpty() ? option.id() : option.name());
+	const auto description = OptionText(
+		option.id(), u"_Description"_q, option.description());
 
 	const auto wrap = container->add(
 		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
@@ -355,10 +371,10 @@ QString AddFavoriteLinkButton(
 		Fn<void(const QString&, not_null<QWidget*>)> registerHighlight) {
 	const auto option = &base::options::lookup<QString>(
 		Window::kOptionFolderFavoriteLink);
-	const auto name = option->name().isEmpty()
-		? option->id()
-		: option->name();
-	const auto &description = option->description();
+	const auto name = OptionText(option->id(), u"_Name"_q,
+		option->name().isEmpty() ? option->id() : option->name());
+	const auto description = OptionText(
+		option->id(), u"_Description"_q, option->description());
 
 	const auto wrap = container->add(
 		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
@@ -459,7 +475,7 @@ void SetupExperimental(
 	};
 	const auto categories = std::vector<Category>{
 		{
-			u"mTelegram tools"_q,
+			tr::ayu_Tools(tr::now),
 			{
 				MTelegram::kFastAnswers,
 				MTelegram::kFavoriteChats,
@@ -473,7 +489,7 @@ void SetupExperimental(
 			}
 		},
 		{
-			u"Chats"_q,
+			tr::ayu_CategoryChats(tr::now),
 			{
 				Dialogs::kOptionForumHideChatsList,
 				Dialogs::kOptionDialogsUnreadOnTop,
@@ -485,7 +501,7 @@ void SetupExperimental(
 			}
 		},
 		{
-			u"Messages"_q,
+			tr::ayu_ExperimentalMessages(tr::now),
 			{
 				Ui::kOptionUseSmallMsgBubbleRadius,
 				HistoryView::kOptionUnlimitedMessageWidth,
@@ -495,7 +511,7 @@ void SetupExperimental(
 			}
 		},
 		{
-			u"Profile"_q,
+			tr::ayu_ExperimentalProfile(tr::now),
 			{
 				Window::kOptionViewProfileInChatsListContextMenu,
 				Info::Profile::kOptionShowPeerIdBelowAbout,
@@ -505,14 +521,14 @@ void SetupExperimental(
 			}
 		},
 		{
-			u"Stickers and emoji"_q,
+			tr::ayu_ExperimentalStickers(tr::now),
 			{
 				ChatHelpers::kOptionTabbedPanelShowOnClick,
 				ChatHelpers::kOptionUnlimitedRecentStickers,
 			}
 		},
 		{
-			u"Media"_q,
+			tr::ayu_ExperimentalMedia(tr::now),
 			{
 				Media::Player::kOptionDisableAutoplayNext,
 				Window::kOptionExternalMediaViewer,
@@ -520,7 +536,7 @@ void SetupExperimental(
 			}
 		},
 		{
-			u"Notifications"_q,
+			tr::ayu_ExperimentalNotifications(tr::now),
 			{
 				Window::Notifications::kOptionHideReplyButton,
 				Window::Notifications::kOptionCustomNotification,
@@ -529,7 +545,7 @@ void SetupExperimental(
 			}
 		},
 		{
-			u"Interface"_q,
+			tr::ayu_ExperimentalInterface(tr::now),
 			{
 				Core::kOptionFractionalScalingEnabled,
 				Core::kOptionHighDpiDownscale,
@@ -545,7 +561,7 @@ void SetupExperimental(
 			}
 		},
 		{
-			u"System"_q,
+			tr::ayu_ExperimentalSystem(tr::now),
 			{
 				MTP::details::kOptionPreferIPv6,
 				MTP::details::kOptionAdvancedFakeTls,
@@ -617,7 +633,7 @@ void SetupExperimental(
 		});
 	}
 
-	addCategory(u"Other"_q, [&](
+	addCategory(tr::ayu_CategoryOther(tr::now), [&](
 			not_null<Ui::VerticalLayout*> inner,
 			std::vector<QString> &searchable) {
 		if (base::options::lookup<bool>(kOptionFastButtonsMode).value()) {
@@ -649,12 +665,12 @@ rpl::producer<QString> Experimental::title() {
 void Experimental::fillTopBarMenu(const Ui::Menu::MenuCallback &addAction) {
 	const auto window = &controller()->window();
 	addAction(
-		u"Export"_q,
+		tr::ayu_FiltersMenuExport(tr::now),
 		[=] {
 			TextUtilities::SetClipboardText(
 				{ EncodeOptionsToText(base::options::serialize()) });
 			window->showToast({
-				.text = { u"Experimental settings code copied to clipboard."_q },
+				.text = { tr::ayu_ExperimentalCodeCopied(tr::now) },
 				.iconLottie = u"toast/copy"_q,
 				.iconLottieSize = st::toastLottieIconSize,
 			});
@@ -664,23 +680,20 @@ void Experimental::fillTopBarMenu(const Ui::Menu::MenuCallback &addAction) {
 		return;
 	}
 	addAction(
-		u"Import"_q,
+		tr::ayu_FiltersMenuImport(tr::now),
 		[=] {
 			const auto decoded = DecodeOptionsFromText(
 				QGuiApplication::clipboard()->text());
 			if (!decoded.ok) {
-				window->showToast(u"Clipboard does not contain "
-					"a valid experimental settings code."_q);
+				window->showToast(tr::ayu_ExperimentalCodeInvalid(tr::now));
 				return;
 			}
 			if (!base::options::deserialize(decoded.json)) {
-				window->showToast(u"Experimental settings code is valid"
-					", but data format is not supported."_q);
+				window->showToast(tr::ayu_ExperimentalCodeUnsupported(tr::now));
 				return;
 			}
 			_reloadOptionsRequests.fire({});
-			window->showToast(u"Experimental settings imported "
-				"from code in clipboard."_q);
+			window->showToast(tr::ayu_ExperimentalCodeImported(tr::now));
 		},
 		&st::menuIconImportTheme);
 }

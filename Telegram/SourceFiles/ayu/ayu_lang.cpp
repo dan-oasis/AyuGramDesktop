@@ -40,6 +40,9 @@ QString AyuLanguage::getCachePath(const QString &langId) {
 }
 
 void AyuLanguage::init() {
+	const auto builtInGuard = gsl::finally([] {
+		applyBuiltIn(Lang::GetInstance());
+	});
 	const auto langPackId = Lang::GetInstance().id();
 	const auto langPackBaseId = Lang::GetInstance().baseId();
 	auto finalLangPackId = langMapping.contains(langPackId) ? langMapping[langPackId] : langPackId;
@@ -49,13 +52,6 @@ void AyuLanguage::init() {
 	}
 	if (finalLangPackId.isEmpty()) {
 		return;
-	}
-
-	if (finalLangPackId == u"ru"_q || langPackBaseId == u"ru"_q) {
-		auto builtIn = QFile(u":/gui/langs/mtelegram_ru.json"_q);
-		if (builtIn.open(QIODevice::ReadOnly)) {
-			applyLanguageJson(QJsonDocument::fromJson(builtIn.readAll()));
-		}
 	}
 
 	const auto cachePath = getCachePath(finalLangPackId);
@@ -78,6 +74,22 @@ void AyuLanguage::init() {
 			LOG(("Loading cached mTelegram language: %1").arg(finalLangPackId));
 			applyLanguageJson(doc);
 		}
+	}
+}
+
+void AyuLanguage::applyBuiltIn(Lang::Instance &language) {
+	if (language.id() != u"ru"_q && language.baseId() != u"ru"_q) {
+		return;
+	}
+	static const auto translations = [] {
+		auto file = QFile(u":/gui/langs/mtelegram_ru.json"_q);
+		return file.open(QIODevice::ReadOnly)
+			? QJsonDocument::fromJson(file.readAll()).object()
+			: QJsonObject();
+	}();
+	for (auto i = translations.begin(); i != translations.end(); ++i) {
+		language.applyValue(
+			(u"ayu_"_q + i.key()).toUtf8(), i.value().toString().toUtf8());
 	}
 }
 

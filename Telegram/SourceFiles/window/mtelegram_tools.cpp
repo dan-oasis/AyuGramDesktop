@@ -63,7 +63,7 @@ base::options::toggle FastAnswers({
 });
 base::options::toggle FavoriteChats({
 	.id = kFavoriteChats,
-	.name = "Docky favorite chats",
+	.name = "Favorite chats",
 	.description = "Pin, open and preview favorite chats from a chat menu.",
 });
 base::options::toggle Subfolders({
@@ -88,17 +88,17 @@ base::options::toggle AdvancedSearch({
 });
 base::options::toggle JumpCommands({
 	.id = kJumpCommands,
-	.name = "JumpTo shortcuts",
+	.name = "Quick shortcuts",
 	.description = "Open Telegram links or settings from a list of named shortcuts.",
 });
 base::options::toggle ModerationNotes({
 	.id = kModerationNotes,
-	.name = "Vanguard moderation notes",
+	.name = "Moderation notes",
 	.description = "Keep local tags and notes for a chat and access its management controls.",
 });
 base::options::toggle QuickTranslate({
 	.id = kQuickTranslate,
-	.name = "Translatica Lite",
+	.name = "Quick translation",
 	.description = "Expose built-in Telegram translation in the message menu.",
 });
 
@@ -161,7 +161,7 @@ void EditText(
 		const auto field = AddInput(
 			box, placeholder, value, Ui::InputField::Mode::MultiLine);
 		box->setFocusCallback([=] { field->setFocusFast(); });
-		box->addButton(rpl::single(u"Save"_q), [=] {
+		box->addButton(tr::lng_settings_save(), [=] {
 			save(field->getLastText().trimmed());
 			box->closeBox();
 		});
@@ -177,7 +177,7 @@ void ShowEntries(
 		Fn<void(QString)> open) {
 	controller->show(Box([=](BoxPointer box) {
 		box->setTitle(rpl::single(title));
-		const auto search = AddInput(box, u"Filter by name or text"_q);
+		const auto search = AddInput(box, tr::ayu_FilterEntries(tr::now));
 		const auto list = box->addRow(object_ptr<Ui::VerticalLayout>(box));
 		const auto text = ReadText(controller, key);
 		const auto render = [=] {
@@ -211,7 +211,7 @@ void ShowEntries(
 		search->changes() | rpl::on_next(render, search->lifetime());
 		render();
 		box->setFocusCallback([=] { search->setFocusFast(); });
-		box->addButton(rpl::single(u"Edit entries"_q), [=] {
+		box->addButton(tr::ayu_EditEntries(), [=] {
 			box->closeBox();
 			EditText(controller, title, placeholder, text, [=](QString updated) {
 				SaveText(controller, key, updated);
@@ -223,7 +223,7 @@ void ShowEntries(
 
 void ShowFavoriteChats(Controller controller) {
 	controller->show(Box([=](BoxPointer box) {
-		box->setTitle(rpl::single(u"Favorite chats"_q));
+		box->setTitle(tr::ayu_FavoriteChats());
 		auto count = 0;
 		for (const auto &id : ReadText(controller, u"favorite-chats"_q).split(
 				',', Qt::SkipEmptyParts)) {
@@ -237,7 +237,8 @@ void ShowFavoriteChats(Controller controller) {
 				box->closeBox();
 				controller->showPeerHistory(peer);
 			});
-			AddChoice(box->verticalLayout(), u"Preview %1"_q.arg(peer->name()), [=] {
+			AddChoice(box->verticalLayout(), tr::ayu_PreviewChat(
+				tr::now, lt_item, peer->name()), [=] {
 				box->closeBox();
 				controller->showChatPreview({
 					peer->owner().history(peer),
@@ -248,7 +249,7 @@ void ShowFavoriteChats(Controller controller) {
 		if (!count) {
 			box->addRow(object_ptr<Ui::FlatLabel>(
 				box,
-				rpl::single(u"Add a favorite from the chat menu."_q),
+				tr::ayu_FavoriteChatsEmpty(),
 				st::boxLabel),
 				st::boxRowPadding);
 		}
@@ -258,7 +259,9 @@ void ShowFavoriteChats(Controller controller) {
 
 void ShowFolderGroups(Controller controller, QString group = {}) {
 	controller->show(Box([=](BoxPointer box) {
-		box->setTitle(rpl::single(group.isEmpty() ? u"Chat folders"_q : group));
+		box->setTitle(rpl::single(group.isEmpty()
+			? tr::ayu_ChatFolders(tr::now)
+			: group));
 		auto groups = QSet<QString>();
 		for (const auto &filter : controller->session().data().chatsFilters().list()) {
 			const auto title = filter.titleText().text;
@@ -295,10 +298,10 @@ void ShowFolderGroups(Controller controller, QString group = {}) {
 void ShowProxySubscription(Controller controller) {
 	const auto key = u"proxy-subscription"_q;
 	controller->show(Box([=](BoxPointer box) {
-		box->setTitle(rpl::single(u"Proxy subscription"_q));
+		box->setTitle(tr::ayu_ProxySubscription());
 		const auto field = AddInput(
-			box, u"HTTPS URL with proxy links"_q, ReadText(controller, key));
-		const auto protocol = AddInput(box, u"Protocol: mtproto, webproxy or socks"_q);
+			box, tr::ayu_ProxySourcePlaceholder(tr::now), ReadText(controller, key));
+		const auto protocol = AddInput(box, tr::ayu_ProxyProtocolPlaceholder(tr::now));
 		const auto wantedType = [=]() -> std::optional<MTP::ProxyData::Type> {
 			using Type = MTP::ProxyData::Type;
 			const auto text = protocol->getLastText().trimmed().toLower();
@@ -317,7 +320,7 @@ void ShowProxySubscription(Controller controller) {
 		const auto manager = new QNetworkAccessManager(box.get());
 		const auto feedback = box->addRow(object_ptr<Ui::FlatLabel>(
 			box, rpl::single(QString()), st::boxLabel), st::boxRowPadding);
-		box->addButton(rpl::single(u"Import"_q), [=] {
+		box->addButton(tr::ayu_FiltersImportAction(), [=] {
 			const auto url = QUrl(field->getLastText().trimmed(), QUrl::StrictMode);
 			const auto type = wantedType();
 			if (!type) {
@@ -351,7 +354,7 @@ void ShowProxySubscription(Controller controller) {
 				reply->deleteLater();
 				if (reply->error() != QNetworkReply::NoError
 					|| data->size() > kProxyListLimit) {
-					feedback->setText(u"Could not load the proxy list."_q);
+					feedback->setText(tr::ayu_ProxyLoadFailed(tr::now));
 					return;
 				}
 				static const auto links = QRegularExpression(
@@ -371,10 +374,11 @@ void ShowProxySubscription(Controller controller) {
 					}
 				}
 				SaveText(controller, key, url.toString());
-				feedback->setText(u"Added %1 proxies."_q.arg(added));
+				feedback->setText(tr::ayu_ProxiesAdded(
+					tr::now, lt_item, QString::number(added)));
 			});
 		});
-		box->addButton(rpl::single(u"Copy list"_q), [=] {
+		box->addButton(tr::ayu_CopyProxyList(), [=] {
 			const auto type = wantedType();
 			if (!type) {
 				return;
@@ -392,7 +396,8 @@ void ShowProxySubscription(Controller controller) {
 			if (!links.isEmpty()) {
 				QGuiApplication::clipboard()->setText(links.join('\n'));
 			}
-			feedback->setText(u"Copied %1 proxy links."_q.arg(links.size()));
+			feedback->setText(tr::ayu_ProxyLinksCopied(
+				tr::now, lt_item, QString::number(links.size())));
 		});
 		box->addButton(tr::lng_close(), [=] { box->closeBox(); });
 	}));
@@ -400,20 +405,20 @@ void ShowProxySubscription(Controller controller) {
 
 void ShowAdvancedSearch(Controller controller, PeerData *peer) {
 	controller->show(Box([=](BoxPointer box) {
-		box->setTitle(rpl::single(u"Advanced search"_q));
-		const auto query = AddInput(box, u"Search text"_q);
-		const auto first = AddInput(box, u"From date (YYYY-MM-DD, optional)"_q);
-		const auto last = AddInput(box, u"To date (YYYY-MM-DD, optional)"_q);
-		const auto media = AddInput(box, u"Media: photo, video, file or link"_q);
+		box->setTitle(tr::ayu_AdvancedSearch());
+		const auto query = AddInput(box, tr::ayu_SearchTextPlaceholder(tr::now));
+		const auto first = AddInput(box, tr::ayu_SearchFromDatePlaceholder(tr::now));
+		const auto last = AddInput(box, tr::ayu_SearchToDatePlaceholder(tr::now));
+		const auto media = AddInput(box, tr::ayu_SearchMediaPlaceholder(tr::now));
 		const auto sender = peer
-			? AddInput(box, u"Sender @username (optional)"_q).get()
+			? AddInput(box, tr::ayu_SearchSenderPlaceholder(tr::now)).get()
 			: nullptr;
 		const auto list = box->addRow(object_ptr<Ui::VerticalLayout>(box));
 		const auto state = box->lifetime().make_state<MTP::Sender>(
 			&controller->session().mtp());
 		const auto active = box->lifetime().make_state<mtpRequestId>(0);
 		box->setFocusCallback([=] { query->setFocusFast(); });
-		box->addButton(rpl::single(u"Search"_q), [=] {
+		box->addButton(tr::lng_dlg_filter(), [=] {
 			if (*active) {
 				return;
 			}
@@ -443,13 +448,13 @@ void ShowAdvancedSearch(Controller controller, PeerData *peer) {
 			const auto text = query->getLastText().trimmed();
 			const auto kind = media->getLastText().trimmed().toLower();
 			auto filter = MTP_inputMessagesFilterEmpty();
-			if (kind == u"photo"_q) {
+			if (kind == u"photo"_q || kind == u"фото"_q) {
 				filter = MTP_inputMessagesFilterPhotos();
-			} else if (kind == u"video"_q) {
+			} else if (kind == u"video"_q || kind == u"видео"_q) {
 				filter = MTP_inputMessagesFilterVideo();
-			} else if (kind == u"file"_q) {
+			} else if (kind == u"file"_q || kind == u"файл"_q) {
 				filter = MTP_inputMessagesFilterDocument();
-			} else if (kind == u"link"_q) {
+			} else if (kind == u"link"_q || kind == u"ссылка"_q) {
 				filter = MTP_inputMessagesFilterUrl();
 			} else if (!kind.isEmpty()) {
 				media->showError();
@@ -499,13 +504,13 @@ void ShowAdvancedSearch(Controller controller, PeerData *peer) {
 					}
 				});
 				if (!list->count()) {
-					AddChoice(list, u"No results"_q, [] {});
+					AddChoice(list, tr::lng_search_messages_none(tr::now), [] {});
 				}
 				list->resizeToWidth(list->width());
 			};
 			const auto fail = [=] {
 				*active = 0;
-				AddChoice(list, u"Search failed"_q, [] {});
+				AddChoice(list, tr::ayu_SearchFailed(tr::now), [] {});
 				list->resizeToWidth(list->width());
 			};
 			if (peer) {
@@ -563,9 +568,9 @@ void FillChatTools(
 		addAction(text, std::move(handler), nullptr);
 	};
 	if (thread && Enabled(kFastAnswers)) {
-		append(u"Fast answers"_q, [=, weak = base::make_weak(thread)] {
-			ShowEntries(controller, u"Fast answers"_q, u"fast-answers"_q,
-				u"One template per line: name=reply"_q, [=](QString text) {
+		append(tr::ayu_FastAnswers(tr::now), [=, weak = base::make_weak(thread)] {
+			ShowEntries(controller, tr::ayu_FastAnswers(tr::now), u"fast-answers"_q,
+				tr::ayu_FastAnswersPlaceholder(tr::now), [=](QString text) {
 					if (const auto target = weak.get()) {
 						auto data = QMimeData();
 						data.setText(std::move(text));
@@ -578,50 +583,52 @@ void FillChatTools(
 		const auto key = u"favorite-chats"_q;
 		const auto id = QString::number(peer->id.value);
 		const auto exists = ReadText(controller, key).split(',').contains(id);
-		append(exists ? u"Remove from favorites"_q : u"Add to favorites"_q, [=] {
+		append(exists
+			? tr::ayu_RemoveFavoriteChat(tr::now)
+			: tr::ayu_AddFavoriteChat(tr::now), [=] {
 			auto ids = ReadText(controller, key).split(',', Qt::SkipEmptyParts);
 			if (!ids.removeAll(id) && ids.size() < kMaxEntries) {
 				ids.push_front(id);
 			}
 			SaveText(controller, key, ids.join(','));
 		});
-		append(u"Favorite chats"_q, [=] { ShowFavoriteChats(controller); });
+		append(tr::ayu_FavoriteChats(tr::now), [=] { ShowFavoriteChats(controller); });
 	}
 	if (Enabled(kSubfolders)) {
-		append(u"Chat subfolders"_q, [=] { ShowFolderGroups(controller); });
+		append(tr::ayu_ChatSubfolders(tr::now), [=] { ShowFolderGroups(controller); });
 	}
 	if (Enabled(kProxySubscriptions)) {
-		append(u"Proxy subscription"_q, [=] { ShowProxySubscription(controller); });
+		append(tr::ayu_ProxySubscription(tr::now), [=] { ShowProxySubscription(controller); });
 	}
 	if (Enabled(kAdvancedSearch)) {
-		append(u"Advanced search in this chat"_q, [=] {
+		append(tr::ayu_SearchThisChat(tr::now), [=] {
 			ShowAdvancedSearch(controller, peer);
 		});
-		append(u"Advanced search in all chats"_q, [=] {
+		append(tr::ayu_SearchAllChats(tr::now), [=] {
 			ShowAdvancedSearch(controller, nullptr);
 		});
 	}
 	if (Enabled(kJumpCommands)) {
-		append(u"Jump to…"_q, [=] {
-			ShowEntries(controller, u"JumpTo shortcuts"_q, u"jump-commands"_q,
-				u"One shortcut per line: name=https://t.me/…"_q, [=](QString text) {
+		append(tr::ayu_JumpTo(tr::now), [=] {
+			ShowEntries(controller, tr::ayu_QuickShortcuts(tr::now), u"jump-commands"_q,
+				tr::ayu_ShortcutsPlaceholder(tr::now), [=](QString text) {
 					const auto url = QUrl(text, QUrl::StrictMode);
 					if ((url.scheme() == u"https"_q && url.host() == u"t.me"_q)
 						|| (url.scheme() == u"tg"_q && url.host() == u"settings"_q)) {
 						UrlClickHandler::Open(text);
 					} else {
-						controller->showToast(u"Enter a Telegram link or settings link."_q);
+						controller->showToast(tr::ayu_ShortcutInvalid(tr::now));
 					}
 				});
 		});
 	}
 	if (Enabled(kModerationNotes) && (peer->isChat() || peer->isMegagroup())) {
 		if (EditPeerInfoBox::Available(peer)) {
-			append(u"Manage this chat"_q, [=] { controller->showEditPeerBox(peer); });
+			append(tr::ayu_ManageChat(tr::now), [=] { controller->showEditPeerBox(peer); });
 		}
-		append(u"Moderation notes and tags"_q, [=] {
+		append(tr::ayu_ModerationNotes(tr::now), [=] {
 			const auto key = u"moderation/%1"_q.arg(peer->id.value);
-			EditText(controller, peer->name(), u"Local tags and notes"_q,
+			EditText(controller, peer->name(), tr::ayu_ModerationNotesPlaceholder(tr::now),
 				ReadText(controller, key), [=](QString text) {
 					SaveText(controller, key, text);
 				});
@@ -646,7 +653,7 @@ void AddChatTools(
 		return;
 	}
 	addAction(Ui::Menu::MenuCallback::Args{
-		.text = u"mTelegram tools"_q,
+		.text = tr::ayu_Tools(tr::now),
 		.handler = nullptr,
 		.icon = &st::menuIconManage,
 		.fillSubmenu = [=](not_null<Ui::PopupMenu*> menu) {

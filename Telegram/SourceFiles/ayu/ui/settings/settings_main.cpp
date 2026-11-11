@@ -100,7 +100,7 @@ void BuildCategories(SectionBuilder &builder) {
 	builder.addSubsectionTitle(tr::ayu_CategoriesHeader());
 
 	builder.addSectionButton({
-		.title = rpl::single(u"mTelegram tools and transport"_q),
+		.title = tr::ayu_ToolsAndTransport(),
 		.targetSection = Experimental::Id(),
 		.icon = { &st::menuIconManage },
 	});

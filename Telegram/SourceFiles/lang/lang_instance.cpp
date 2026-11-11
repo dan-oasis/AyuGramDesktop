@@ -19,6 +19,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "lang_auto_counts.h" // kKeysCount, kTagsCount.
 
+// mTelegram includes
+#include "ayu/ayu_lang.h"
+
+
 namespace Lang {
 namespace {
 
@@ -302,6 +306,9 @@ void Instance::reset(const Language &data) {
 	ranges::fill(_nonDefaultSet, 0);
 	updateChoosingStickerReplacement();
 
+	if (!_derived) {
+		AyuLanguage::applyBuiltIn(*this);
+	}
 	_idChanges.fire_copy(_id);
 }
 
@@ -548,6 +555,9 @@ void Instance::fillFromSerialized(
 	updatePluralRules();
 	updateChoosingStickerReplacement();
 
+	if (!_derived) {
+		AyuLanguage::applyBuiltIn(*this);
+	}
 	_idChanges.fire_copy(_id);
 }
 
@@ -696,8 +706,10 @@ void Instance::applyDifferenceToMe(
 		});
 	}
 	if (!_derived) {
+		AyuLanguage::applyBuiltIn(*this);
 		_updated.fire({});
 	} else {
+		AyuLanguage::applyBuiltIn(*_derived);
 		_derived->_updated.fire({});
 	}
 }

@@ -6,6 +6,7 @@
 // Copyright @Radolyn, 2026
 #include "ayu/ui/components/avatar_corners_preview.h"
 
+#include "lang/lang_keys.h"
 #include "styles/style_dialogs.h"
 #include "styles/style_settings.h"
 #include "ui/empty_userpic.h"
@@ -39,5 +40,5 @@ void AvatarCornersPreview::paintEvent(QPaintEvent *e) {
 
 	p.setPen(st::dialogsTextFg);
 	p.setFont(st::dialogsTextFont);
-	p.drawText(row.textLeft + xShift, row.textTop + st::dialogsTextFont->ascent, u"Better late than never"_q);
+	p.drawText(row.textLeft + xShift, row.textTop + st::dialogsTextFont->ascent, tr::ayu_AvatarPreviewText(tr::now));
 }
