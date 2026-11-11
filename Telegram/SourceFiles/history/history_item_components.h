@@ -172,6 +172,7 @@ public:
 		std::optional<uint8> colorIndex = {});
 
 	QString name;
+	QString displayName;
 	QString firstName;
 	QString lastName;
 	uint8 colorIndex = 0;

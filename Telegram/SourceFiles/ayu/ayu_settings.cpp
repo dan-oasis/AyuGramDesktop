@@ -985,6 +985,23 @@ void AyuSettings::setFilterZalgo(bool val) {
 	save();
 }
 
+void AyuSettings::setNicknameReplacement(bool enabled) {
+	if (_nicknameReplacement.current() == enabled) {
+		return;
+	}
+	_nicknameReplacement = enabled;
+	save();
+}
+
+void AyuSettings::setNicknameFilter(bool custom, const QString &pattern) {
+	if (_nicknameCustomFilter == custom && _nicknameFilterPattern == pattern) {
+		return;
+	}
+	_nicknameCustomFilter = custom;
+	_nicknameFilterPattern = pattern;
+	save();
+}
+
 void AyuSettings::setStickerConfirmation(bool val) {
 	if (_stickerConfirmation.current() == val) return;
 	_stickerConfirmation = val;
@@ -1145,6 +1162,9 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"showMessageSeconds", s._showMessageSeconds.current()},
 		{"showMessageShot", s._showMessageShot.current()},
 		{"filterZalgo", s._filterZalgo.current()},
+		{"nicknameReplacement", s._nicknameReplacement.current()},
+		{"nicknameCustomFilter", s._nicknameCustomFilter},
+		{"nicknameFilterPattern", s._nicknameFilterPattern},
 		{"stickerConfirmation", s._stickerConfirmation.current()},
 		{"gifConfirmation", s._gifConfirmation.current()},
 		{"voiceConfirmation", s._voiceConfirmation.current()},
@@ -1248,6 +1268,9 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._showMessageSeconds = j.value("showMessageSeconds", defaults._showMessageSeconds.current());
 	s._showMessageShot = j.value("showMessageShot", defaults._showMessageShot.current());
 	s._filterZalgo = j.value("filterZalgo", defaults._filterZalgo.current());
+	s._nicknameReplacement = j.value("nicknameReplacement", defaults._nicknameReplacement.current());
+	s._nicknameCustomFilter = j.value("nicknameCustomFilter", defaults._nicknameCustomFilter);
+	s._nicknameFilterPattern = j.value("nicknameFilterPattern", defaults._nicknameFilterPattern);
 	s._stickerConfirmation = j.value("stickerConfirmation", defaults._stickerConfirmation.current());
 	s._gifConfirmation = j.value("gifConfirmation", defaults._gifConfirmation.current());
 	s._voiceConfirmation = j.value("voiceConfirmation", defaults._voiceConfirmation.current());

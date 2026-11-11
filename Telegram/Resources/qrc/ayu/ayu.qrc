@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/gui">
         <file alias="icons/ayu/nocover.svg">../../icons/ayu/nocover.svg</file>
+        <file alias="langs/mtelegram_ru.json">../../langs/mtelegram_ru.json</file>
     </qresource>
 </RCC>

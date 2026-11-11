@@ -71,7 +71,7 @@ void Dice::updateOutcomeMessage() {
 	const auto fromName = !originalPostAuthor.isEmpty()
 		? originalPostAuthor
 		: forwarded && forwarded->originalHiddenSenderInfo
-		? forwarded->originalHiddenSenderInfo->name
+		? forwarded->originalHiddenSenderInfo->displayName
 		: from->name();
 	const auto out = (item->out() || from->isSelf()) && !forwarded;
 	const auto won = (_outcomeNanoTon > 0);

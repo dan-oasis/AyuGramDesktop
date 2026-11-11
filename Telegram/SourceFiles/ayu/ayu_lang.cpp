@@ -51,6 +51,13 @@ void AyuLanguage::init() {
 		return;
 	}
 
+	if (finalLangPackId == u"ru"_q || langPackBaseId == u"ru"_q) {
+		auto builtIn = QFile(u":/gui/langs/mtelegram_ru.json"_q);
+		if (builtIn.open(QIODevice::ReadOnly)) {
+			applyLanguageJson(QJsonDocument::fromJson(builtIn.readAll()));
+		}
+	}
+
 	const auto cachePath = getCachePath(finalLangPackId);
 	QFile file(cachePath);
 	if (!file.exists()) {

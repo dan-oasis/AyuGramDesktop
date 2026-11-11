@@ -177,6 +177,8 @@ set(mtelegram_files
         ayu/utils/qt_key_modifiers_extended.h
         ayu/utils/telegram_helpers.cpp
         ayu/utils/telegram_helpers.h
+        ayu/utils/nickname_filter.cpp
+        ayu/utils/nickname_filter.h
         ayu/ui/toasts.cpp
         ayu/ui/toasts.h
         ayu/ui/ayu_userpic.cpp

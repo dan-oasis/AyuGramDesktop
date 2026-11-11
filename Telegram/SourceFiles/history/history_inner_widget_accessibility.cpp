@@ -88,7 +88,7 @@ QString MessageAccessibilityName(
 			lines.push_back(tr::lng_forwarded(
 				tr::now,
 				lt_user,
-				forwarded->originalHiddenSenderInfo->name));
+				forwarded->originalHiddenSenderInfo->displayName));
 		}
 	}
 
@@ -514,7 +514,7 @@ QString MessageSubItemValue(
 				return tr::lng_forwarded(
 					tr::now,
 					lt_user,
-					fwd->originalHiddenSenderInfo->name);
+					fwd->originalHiddenSenderInfo->displayName);
 			}
 		}
 		return {};

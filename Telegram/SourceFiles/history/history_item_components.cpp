@@ -67,6 +67,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/features/filters/filters_controller.h"
+#include "ayu/utils/nickname_filter.h"
 
 
 namespace {
@@ -226,6 +227,7 @@ HiddenSenderInfo::HiddenSenderInfo(
 	bool external,
 	std::optional<uint8> colorIndex)
 : name(name)
+, displayName(Ayu::NicknameForDisplay(name))
 , colorIndex(colorIndex.value_or(
 	Data::DecideColorIndex(Data::FakePeerIdForJustName(name))))
 , emptyUserpic(
@@ -250,7 +252,7 @@ HiddenSenderInfo::HiddenSenderInfo(
 
 const Ui::Text::String &HiddenSenderInfo::nameText() const {
 	if (_nameText.isEmpty()) {
-		_nameText.setText(st::msgNameStyle, name, Ui::NameTextOptions());
+		_nameText.setText(st::msgNameStyle, displayName, Ui::NameTextOptions());
 	}
 	return _nameText;
 }
@@ -308,7 +310,7 @@ TextWithEntities HistoryMessageForwarded::phrase(
 	const auto name = TextWithEntities{
 		.text = (originalSender
 			? originalSender->name()
-			: originalHiddenSenderInfo->name)
+			: originalHiddenSenderInfo->displayName)
 	};
 	auto result = std::move(userpic);
 	if (!originalPostAuthor.isEmpty()) {
@@ -318,7 +320,7 @@ TextWithEntities HistoryMessageForwarded::phrase(
 				lt_channel,
 				name,
 				lt_user,
-				{ .text = originalPostAuthor },
+				{ .text = Ayu::NicknameForDisplay(originalPostAuthor) },
 				tr::marked));
 	} else {
 		result.append(name);

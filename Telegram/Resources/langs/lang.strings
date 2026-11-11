@@ -9499,6 +9499,16 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_GhostModeShortcut" = "Enter with Ghost";
 "ayu_SettingsShowMessageSeconds" = "Show Message Seconds";
 "ayu_FilterZalgo" = "Filter Zalgo";
+"ayu_NicknameReplacement" = "Name substitution";
+"ayu_NicknameFilter" = "Configure name filter";
+"ayu_NicknameStandard" = "Standard";
+"ayu_NicknameCustom" = "Custom filter";
+"ayu_NicknameStandardInfo" = "Mark names containing invisible characters, names made of spaces or punctuation, and names containing a single letter.";
+"ayu_NicknamePattern" = "Regular expression, for example ^[.,\\s]*$";
+"ayu_NicknamePatternInvalid" = "Enter a valid regular expression, up to 256 characters.";
+"ayu_NicknameFilterInfo" = "A matching name is displayed as 👤 followed by the user ID. The filter searches the full display name. Use ^ and $ to match the entire name.";
+"ayu_NicknameReplacementInfo" = "Replace matching user names throughout the interface with 👤 and their ID. Restart the app after changing the filter.";
+"ayu_NicknameHiddenId" = "👤 ID hidden";
 "ayu_ImproveLinkPreviews" = "Improve Link Previews";
 "ayu_ShowOnlyAddedEmojisAndStickers" = "Show Only Added Emojis & Stickers";
 "ayu_ContextCopyID" = "Copy ID";

@@ -341,6 +341,9 @@ public:
 	[[nodiscard]] bool showMessageSeconds() const { return _showMessageSeconds.current(); }
 	[[nodiscard]] bool showMessageShot() const { return _showMessageShot.current(); }
 	[[nodiscard]] bool filterZalgo() const { return _filterZalgo.current(); }
+	[[nodiscard]] bool nicknameReplacement() const { return _nicknameReplacement.current(); }
+	[[nodiscard]] bool nicknameCustomFilter() const { return _nicknameCustomFilter; }
+	[[nodiscard]] const QString &nicknameFilterPattern() const { return _nicknameFilterPattern; }
 	[[nodiscard]] bool stickerConfirmation() const { return _stickerConfirmation.current(); }
 	[[nodiscard]] bool gifConfirmation() const { return _gifConfirmation.current(); }
 	[[nodiscard]] bool voiceConfirmation() const { return _voiceConfirmation.current(); }
@@ -427,6 +430,8 @@ public:
 	void setShowMessageSeconds(bool val);
 	void setShowMessageShot(bool val);
 	void setFilterZalgo(bool val);
+	void setNicknameReplacement(bool enabled);
+	void setNicknameFilter(bool custom, const QString &pattern);
 	void setStickerConfirmation(bool val);
 	void setGifConfirmation(bool val);
 	void setVoiceConfirmation(bool val);
@@ -589,6 +594,7 @@ public:
 	[[nodiscard]] rpl::producer<bool> showMessageShotChanges() const { return _showMessageShot.changes(); }
 	[[nodiscard]] rpl::producer<bool> filterZalgoValue() const { return _filterZalgo.value(); }
 	[[nodiscard]] rpl::producer<bool> filterZalgoChanges() const { return _filterZalgo.changes(); }
+	[[nodiscard]] rpl::producer<bool> nicknameReplacementValue() const { return _nicknameReplacement.value(); }
 	[[nodiscard]] rpl::producer<bool> stickerConfirmationValue() const { return _stickerConfirmation.value(); }
 	[[nodiscard]] rpl::producer<bool> stickerConfirmationChanges() const { return _stickerConfirmation.changes(); }
 	[[nodiscard]] rpl::producer<bool> gifConfirmationValue() const { return _gifConfirmation.value(); }
@@ -695,6 +701,9 @@ private:
 	rpl::variable<bool> _showMessageSeconds = false;
 	rpl::variable<bool> _showMessageShot = true;
 	rpl::variable<bool> _filterZalgo = false;
+	rpl::variable<bool> _nicknameReplacement = false;
+	bool _nicknameCustomFilter = false;
+	QString _nicknameFilterPattern;
 	rpl::variable<bool> _stickerConfirmation = false;
 	rpl::variable<bool> _gifConfirmation = false;
 	rpl::variable<bool> _voiceConfirmation = false;

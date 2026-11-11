@@ -40,6 +40,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ayu/ayu_settings.h"
 #include "ayu/features/message_shot/message_shot.h"
 #include "ayu/utils/telegram_helpers.h"
+#include "ayu/utils/nickname_filter.h"
 #include "styles/style_ayu_icons.h"
 
 
@@ -805,7 +806,7 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 		|| !item->history()->peer->asChannel()->signatureProfiles()) {
 		if (const auto msgsigned = item->Get<HistoryMessageSigned>()) {
 			if (!msgsigned->isAnonymousRank) {
-				result.author = msgsigned->author;
+				result.author = Ayu::NicknameForDisplay(msgsigned->author);
 			}
 		}
 	}

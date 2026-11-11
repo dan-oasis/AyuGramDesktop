@@ -5284,8 +5284,8 @@ ItemPreview HistoryItem::toPreview(ToPreviewOptions options) const {
 			return sender
 				? fromSender(sender)
 				: forwarded->savedFromHiddenSenderInfo
-				? forwarded->savedFromHiddenSenderInfo->name
-				: forwarded->originalHiddenSenderInfo->name;
+				? forwarded->savedFromHiddenSenderInfo->displayName
+				: forwarded->originalHiddenSenderInfo->displayName;
 		}
 		return {};
 	};
