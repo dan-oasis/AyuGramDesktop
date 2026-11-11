@@ -652,6 +652,10 @@ bool InnerWidget::elementHideTopicButton(not_null<const Element*> view) {
 	return false;
 }
 
+HistoryView::GramReadLine *InnerWidget::elementGramReadLine() {
+	return nullptr;
+}
+
 void InnerWidget::saveState(not_null<SectionMemento*> memento) {
 	if (!_item) {
 		memento->setItems({}, {}, false, true);
@@ -1807,3 +1811,4 @@ QPoint InnerWidget::mapPointToItem(QPoint point, const Element *view) const {
 InnerWidget::~InnerWidget() = default;
 
 } // namespace MessageHistory
+

@@ -729,8 +729,6 @@ void TopBarWidget::paintTopBar(Painter &p) {
 			.nameWidth = _title.maxWidth(),
 			.outerWidth = width(),
 			.verified = &st::dialogsVerifiedIcon,
-			.exteraOfficial = &st::dialogsExteraOfficialIcon.icon,
-			.exteraSupporter = &st::dialogsExteraSupporterIcon.icon,
 			.premium = &st::dialogsPremiumIcon.icon,
 			.scam = &st::attentionButtonFg,
 			.direct = &st::windowSubTextFg,
@@ -1000,6 +998,13 @@ void TopBarWidget::setActiveChat(
 			) | rpl::on_next([=](const QString &name) {
 				_titlePeerText.setText(st::dialogsTextStyle, name);
 				_titlePeerTextOnline = false;
+				update();
+			}, _activeChatLifetime);
+
+			session().changes().topicUpdates(
+				topic,
+				Data::TopicUpdate::Flag::Title
+			) | rpl::on_next([=] {
 				update();
 			}, _activeChatLifetime);
 

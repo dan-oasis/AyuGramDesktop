@@ -6,37 +6,22 @@
 // Copyright @Radolyn, 2026
 #pragma once
 
-#include <QtNetwork/QNetworkReply>
-#include <QtXml/QDomDocument>
+#include <QtCore/QString>
 
-class AyuLanguage : public QObject
-{
-	Q_OBJECT
-	Q_DISABLE_COPY(AyuLanguage)
+class QJsonDocument;
 
+namespace Lang {
+class Instance;
+} // namespace Lang
+
+class AyuLanguage {
 public:
-	static AyuLanguage *currentInstance();
 	static void init();
-	static AyuLanguage *instance;
-
-	void fetchLanguage(const QString &id, const QString &baseId);
-	void applyLanguageJson(QJsonDocument doc);
-
-public Q_SLOTS:
-	void fetchFinished();
-	void fetchError(QNetworkReply::NetworkError e);
+	static void applyBuiltIn(Lang::Instance &language);
 
 private:
-	AyuLanguage();
-	~AyuLanguage() override = default;
+	static void applyLanguageJson(QJsonDocument doc);
+	static QString getCacheDir();
+	static QString getCachePath(const QString &langId);
 
-	void loadCachedLanguage();
-	void saveCachedLanguage(const QByteArray &json, const QString &langId);
-	[[nodiscard]] QString getCacheDir() const;
-	[[nodiscard]] QString getCachePath(const QString &langId) const;
-
-	QNetworkAccessManager networkManager;
-	QNetworkReply *_chkReply = nullptr;
-	bool needFallback = false;
-	QString _currentLangId;
 };

@@ -11,7 +11,6 @@
 #include "ayu/ayu_ui_settings.h"
 #include "ayu/ayu_worker.h"
 #include "ayu/features/streamer_mode/streamer_mode.h"
-#include "ayu/ui/ayu_logo.h"
 #include "core/application.h"
 #include "features/filters/filters_cache_controller.h"
 #include "features/translator/ayu_translator.h"
@@ -355,8 +354,7 @@ void from_json(const nlohmann::json &j, MessageShotSettings &s) {
 }
 
 AyuSettings::AyuSettings()
-: _appIcon(AyuAssets::DEFAULT_ICON)
-, _editedMark(Core::IsAppLaunched() ? tr::lng_edited(tr::now) : QString("edited")) {
+: _editedMark(Core::IsAppLaunched() ? tr::lng_edited(tr::now) : QString("edited")) {
 }
 
 AyuSettings &AyuSettings::getInstance() {
@@ -392,16 +390,16 @@ void AyuSettings::load() {
 			});
 			p["useGlobalGhostMode"] = true;
 
-			LOG(("AyuGramSettings: migrated ghost mode settings to per-account format"));
+			LOG(("mTelegramSettings: migrated ghost mode settings to per-account format"));
 		}
 
 		try {
 			from_json(p, settings);
 		} catch (...) {
-			LOG(("AyuGramSettings: failed to parse settings file"));
+			LOG(("mTelegramSettings: failed to parse settings file"));
 		}
 	} catch (...) {
-		LOG(("AyuGramSettings: failed to read settings file (not json-like)"));
+		LOG(("mTelegramSettings: failed to read settings file (not json-like)"));
 	}
 
 	if (cGhost()) {
@@ -699,12 +697,6 @@ void AyuSettings::setShowPrivateChatReactions(bool val) {
 	save();
 }
 
-void AyuSettings::setAppIcon(const QString &val) {
-	if (_appIcon.current() == val) return;
-	_appIcon = val;
-	save();
-}
-
 void AyuSettings::setSimpleQuotesAndReplies(bool val) {
 	if (_simpleQuotesAndReplies.current() == val) return;
 	_simpleQuotesAndReplies = val;
@@ -993,6 +985,23 @@ void AyuSettings::setFilterZalgo(bool val) {
 	save();
 }
 
+void AyuSettings::setNicknameReplacement(bool enabled) {
+	if (_nicknameReplacement.current() == enabled) {
+		return;
+	}
+	_nicknameReplacement = enabled;
+	save();
+}
+
+void AyuSettings::setNicknameFilter(bool custom, const QString &pattern) {
+	if (_nicknameCustomFilter == custom && _nicknameFilterPattern == pattern) {
+		return;
+	}
+	_nicknameCustomFilter = custom;
+	_nicknameFilterPattern = pattern;
+	save();
+}
+
 void AyuSettings::setStickerConfirmation(bool val) {
 	if (_stickerConfirmation.current() == val) return;
 	_stickerConfirmation = val;
@@ -1106,7 +1115,6 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"showChannelReactions", s._showChannelReactions.current()},
 		{"showGroupReactions", s._showGroupReactions.current()},
 		{"showPrivateChatReactions", s._showPrivateChatReactions.current()},
-		{"appIcon", s._appIcon.current()},
 		{"simpleQuotesAndReplies", s._simpleQuotesAndReplies.current()},
 		{"hideFastShare", s._hideFastShare.current()},
 		{"replaceBottomInfoWithIcons", s._replaceBottomInfoWithIcons.current()},
@@ -1154,6 +1162,9 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"showMessageSeconds", s._showMessageSeconds.current()},
 		{"showMessageShot", s._showMessageShot.current()},
 		{"filterZalgo", s._filterZalgo.current()},
+		{"nicknameReplacement", s._nicknameReplacement.current()},
+		{"nicknameCustomFilter", s._nicknameCustomFilter},
+		{"nicknameFilterPattern", s._nicknameFilterPattern},
 		{"stickerConfirmation", s._stickerConfirmation.current()},
 		{"gifConfirmation", s._gifConfirmation.current()},
 		{"voiceConfirmation", s._voiceConfirmation.current()},
@@ -1210,7 +1221,6 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._showChannelReactions = j.value("showChannelReactions", defaults._showChannelReactions.current());
 	s._showGroupReactions = j.value("showGroupReactions", defaults._showGroupReactions.current());
 	s._showPrivateChatReactions = j.value("showPrivateChatReactions", defaults._showPrivateChatReactions.current());
-	s._appIcon = j.value("appIcon", defaults._appIcon.current());
 	s._simpleQuotesAndReplies = j.value("simpleQuotesAndReplies", defaults._simpleQuotesAndReplies.current());
 	s._hideFastShare = j.value("hideFastShare", defaults._hideFastShare.current());
 	s._replaceBottomInfoWithIcons = j.value("replaceBottomInfoWithIcons", defaults._replaceBottomInfoWithIcons.current());
@@ -1258,6 +1268,9 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._showMessageSeconds = j.value("showMessageSeconds", defaults._showMessageSeconds.current());
 	s._showMessageShot = j.value("showMessageShot", defaults._showMessageShot.current());
 	s._filterZalgo = j.value("filterZalgo", defaults._filterZalgo.current());
+	s._nicknameReplacement = j.value("nicknameReplacement", defaults._nicknameReplacement.current());
+	s._nicknameCustomFilter = j.value("nicknameCustomFilter", defaults._nicknameCustomFilter);
+	s._nicknameFilterPattern = j.value("nicknameFilterPattern", defaults._nicknameFilterPattern);
 	s._stickerConfirmation = j.value("stickerConfirmation", defaults._stickerConfirmation.current());
 	s._gifConfirmation = j.value("gifConfirmation", defaults._gifConfirmation.current());
 	s._voiceConfirmation = j.value("voiceConfirmation", defaults._voiceConfirmation.current());

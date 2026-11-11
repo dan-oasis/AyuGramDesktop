@@ -650,6 +650,7 @@ private:
 	crl::time _lastFullUpdate = 0;
 
 	QString _name;
+	QString _displayName;
 	uint32 _nameVersion : 16 = 1;
 	uint32 _sensitiveContent : 1 = 0;
 	uint32 _wallPaperOverriden : 1 = 0;

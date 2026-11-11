@@ -87,12 +87,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "payments/payments_non_panel_process.h" // ProcessNonPanelPaymentFormFactory.
 #include "platform/platform_notifications_manager.h"
 #include "spellcheck/spellcheck_highlight_syntax.h"
+#include "tgw/tgw_media.h"
 
 #include "styles/style_chat.h"
 #include "styles/style_credits.h"
 #include "styles/style_dialogs.h"
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
 #include "ayu/features/filters/filters_controller.h"
 #include "ayu/features/message_shot/message_shot.h"
@@ -570,6 +571,10 @@ std::unique_ptr<Data::Media> HistoryItem::CreateMedia(
 	}, [](const MTPDmessageMediaVideoStream &) -> Result {
 		// Live stories.
 		return nullptr;
+	}, [&](const MTPDmessageMediaWidget &media) -> Result {
+		return std::make_unique<Tgw::WidgetMedia>(
+			item,
+			Tgw::ParseWidgetFields(media));
 	}, [](const MTPDmessageMediaEmpty &) -> Result {
 		return nullptr;
 	}, [](const MTPDmessageMediaUnsupported &) -> Result {
@@ -763,7 +768,10 @@ HistoryItem::HistoryItem(
 	auto config = CreateConfig();
 
 	const auto originalMedia = original->media();
-	const auto dropForwardInfo = fields.ignoreForwardFrom
+	// drop_author never applies to widgets: the server keeps their header.
+	const auto ignoreForwardFrom = fields.ignoreForwardFrom
+		&& !dynamic_cast<const Tgw::WidgetMedia*>(originalMedia);
+	const auto dropForwardInfo = ignoreForwardFrom
 		|| original->computeDropForwardedInfo();
 	const auto topicRootId = fields.replyTo.topicRootId;
 	config.reply.messageId = config.reply.topMessageId = topicRootId;
@@ -2873,9 +2881,9 @@ void HistoryItem::applySentMessage(const MTPDmessage &data) {
 		_flags &= ~MessageFlag::InvertMedia;
 	}
 	if (data.is_noforwards()) {
-		_flags |= MessageFlag::NoForwards;
+		_flags |= MessageFlag::AyuNoForwards;
 	} else {
-		_flags &= ~MessageFlag::NoForwards;
+		_flags &= ~MessageFlag::AyuNoForwards;
 	}
 
 	const auto wasTypes = sharedMediaTypes();
@@ -4492,7 +4500,7 @@ void HistoryItem::setAyuHint(const QString &hint) {
 		history()->owner().requestItemViewRefresh(this);
 		history()->owner().requestItemResize(this);
 	} catch (...) {
-		DEBUG_LOG(("AyuGram: crash in setting hint"));
+		DEBUG_LOG(("mTelegram: crash in setting hint"));
 	}
 }
 
@@ -5276,8 +5284,8 @@ ItemPreview HistoryItem::toPreview(ToPreviewOptions options) const {
 			return sender
 				? fromSender(sender)
 				: forwarded->savedFromHiddenSenderInfo
-				? forwarded->savedFromHiddenSenderInfo->name
-				: forwarded->originalHiddenSenderInfo->name;
+				? forwarded->savedFromHiddenSenderInfo->displayName
+				: forwarded->originalHiddenSenderInfo->displayName;
 		}
 		return {};
 	};
@@ -8819,12 +8827,10 @@ PreparedServiceText HistoryItem::preparePinnedText() {
 			tr::marked);
 	} else {
 		result.links.push_back(fromLink());
-		result.text = tr::lng_action_pinned_media(
+		result.text = tr::lng_action_pinned_deleted(
 			tr::now,
 			lt_from,
 			fromLinkText(), // Link 1.
-			lt_media,
-			{ .text = tr::lng_deleted_message(tr::now) },
 			tr::marked);
 	}
 	return result;
@@ -9449,3 +9455,4 @@ void HistoryItem::overrideMedia(std::unique_ptr<Data::Media> media) {
 void HistoryItem::removeTranslationBit() {
 	RemoveComponents(HistoryMessageTranslation::Bit());
 }
+

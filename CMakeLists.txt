@@ -19,8 +19,8 @@ endif()
 project(Telegram
     LANGUAGES C CXX
     VERSION ${desktop_app_version_cmake}
-    DESCRIPTION "AyuGram Desktop"
-    HOMEPAGE_URL "https://ayugram.one"
+    DESCRIPTION "mTelegram"
+    HOMEPAGE_URL "https://github.com/dan-oasis/AyuGramDesktop"
 )
 
 if (APPLE)
@@ -53,6 +53,8 @@ include(cmake/generate_target.cmake)
 include(cmake/nuget.cmake)
 include(cmake/validate_d3d_compiler.cmake)
 include(cmake/target_prepare_qrc.cmake)
+
+set(DESKTOP_APP_DISABLE_AUTOUPDATE ON CACHE BOOL "Disable automatic updates")
 
 include(cmake/options.cmake)
 

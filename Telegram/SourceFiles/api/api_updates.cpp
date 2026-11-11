@@ -18,6 +18,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_transcribes.h"
 #include "main/main_session.h"
 #include "main/main_account.h"
+#include "main/main_domain.h"
 #include "main/main_app_config.h"
 #include "mtproto/mtp_instance.h"
 #include "mtproto/mtproto_config.h"
@@ -67,6 +68,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/storage_shared_media.h"
 #include "calls/calls_instance.h"
 #include "base/unixtime.h"
+#include "tgw/tgw_state.h"
+#include "tgw/tgw_storage.h"
 #include "window/window_session_controller.h"
 #include "window/window_controller.h"
 #include "wallet/wallet_panel.h"
@@ -251,6 +254,11 @@ Updates::Updates(not_null<Main::Session*> session)
 	session->account().mtpUpdates(
 	) | rpl::on_next([=](const MTPUpdates &updates) {
 		mtpUpdateReceived(updates);
+	}, _lifetime);
+
+	session->domain().activeSessionChanges(
+	) | rpl::on_next([=](Main::Session *) {
+		updateOnline();
 	}, _lifetime);
 
 	session->account().mtpNewSessionCreated(
@@ -1006,8 +1014,10 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 	// AyuGram sendOnlinePackets
 	const auto &ghost = AyuSettings::ghost(_session);
 	const auto& config = _session->serverConfig();
-	bool isOnlineOrig = Core::App().hasActiveWindow(&session());
-	bool isOnline = ghost.sendOnlinePackets() && isOnlineOrig;
+	const auto hasActiveWindow = Core::App().hasActiveWindow(&session());
+	auto isOnline = hasActiveWindow
+		&& Core::App().maybePrimarySession() == _session.get()
+		&& ghost.sendOnlinePackets();
 
 	int updateIn = config.onlineUpdatePeriod;
 	Assert(updateIn >= 0);
@@ -1032,7 +1042,7 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 		|| (isOnline && gotOtherOffline)) {
 		api().request(base::take(_onlineRequest)).cancel();
 
-		_lastWasOnline = isOnlineOrig;
+		_lastWasOnline = isOnline;
 		_lastSetOnline = ms;
 		if (!Core::Quitting()) {
 			_onlineRequest = api().request(MTPaccount_UpdateStatus(
@@ -1055,7 +1065,7 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 		session().changes().peerUpdated(
 			self,
 			Data::PeerUpdate::Flag::OnlineStatus);
-		if (!isOnlineOrig) { // Went offline, so we need to save message draft to the cloud.
+		if (!hasActiveWindow) { // Went offline, so we need to save message draft to the cloud.
 			api().saveCurrentDraftToCloud();
 			session().data().maybeStopWatchForOffline(self);
 		}
@@ -1482,6 +1492,11 @@ void Updates::applyUpdateNoPtsCheck(const MTPUpdate &update) {
 		_session->data().updateEditedMessage(d.vmessage());
 	} break;
 
+	case mtpc_updateMessageWidgetData: {
+		const auto &d = update.c_updateMessageWidgetData();
+		Tgw::ApplyStateUpdate(_session, d);
+	} break;
+
 	case mtpc_updateChannelWebPage: {
 		const auto &d = update.c_updateChannelWebPage();
 		Q_UNUSED(d); // Web page was updated anyway.
@@ -1725,6 +1740,7 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 						newId);
 					if (existing && !local->mainView()) {
 						const auto history = local->history();
+						Tgw::MoveStorage(local, existing);
 						local->destroy();
 						history->requestChatListMessage();
 					} else {
@@ -1792,6 +1808,11 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 	// Edited messages.
 	case mtpc_updateEditMessage: {
 		const auto &d = update.c_updateEditMessage();
+		updateAndApply(d.vpts().v, d.vpts_count().v, update);
+	} break;
+
+	case mtpc_updateMessageWidgetData: {
+		const auto &d = update.c_updateMessageWidgetData();
 		updateAndApply(d.vpts().v, d.vpts_count().v, update);
 	} break;
 
@@ -2644,6 +2665,10 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 
 	case mtpc_updateChannelAvailableMessages: {
 		const auto &d = update.c_updateChannelAvailableMessages();
+		Tgw::ClearHistoryStorage(
+			&session(),
+			peerFromChannel(d.vchannel_id()),
+			d.vavailable_min_id().v);
 		if (const auto channel = session().data().channelLoaded(d.vchannel_id())) {
 			channel->setAvailableMinId(d.vavailable_min_id().v);
 			if (const auto history = session().data().historyLoaded(channel)) {
@@ -2687,6 +2712,27 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 				}();
 				if (!done) {
 					forum->reloadTopics();
+				}
+			}
+		}
+	} break;
+
+	case mtpc_updateEditForumTopic: {
+		const auto &d = update.c_updateEditForumTopic();
+		const auto peerId = peerFromMTP(d.vpeer());
+		if (const auto peer = session().data().peerLoaded(peerId)) {
+			if (const auto topic = peer->forumTopicFor(d.vtopic_id().v)) {
+				if (const auto &title = d.vtitle()) {
+					topic->applyTitle(qs(*title));
+				}
+				if (const auto icon = d.vicon_emoji_id()) {
+					topic->applyIconId(icon->v);
+				}
+				if (const auto closed = d.vclosed()) {
+					topic->setClosed(mtpIsTrue(*closed));
+				}
+				if (const auto hidden = d.vhidden()) {
+					topic->setHidden(mtpIsTrue(*hidden));
 				}
 			}
 		}

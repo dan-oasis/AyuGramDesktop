@@ -62,8 +62,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <kurlmimedata.h>
 
-// AyuGram includes
-#include "ayu/ui/ayu_logo.h"
+// mTelegram includes
 
 
 namespace Window {
@@ -145,11 +144,12 @@ const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
 const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
 QImage Logo() {
-	return AyuAssets::currentAppLogo();
+	static const auto result = QImage(u":/gui/art/logo_256.png"_q);
+	return result;
 }
 
 QImage LogoNoMargin() {
-	return AyuAssets::currentAppLogo();
+	return LogoTelegramDefault();
 }
 
 const QImage &LogoTelegramDefault() {
@@ -841,8 +841,7 @@ void MainWindow::firstShow() {
 		show();
 		return;
 	}
-	const auto position = initialPosition();
-	const auto geometry = countInitialGeometry(position);
+	const auto geometry = countInitialGeometry(initialPosition());
 	DEBUG_LOG(("Window Pos: Setting first %1, %2, %3, %4"
 		).arg(geometry.x()
 		).arg(geometry.y()
@@ -850,23 +849,6 @@ void MainWindow::firstShow() {
 		).arg(geometry.height()));
 	setGeometry(geometry);
 	show();
-
-	InvokeQueued(this, [=] {
-		const auto counted = countInitialGeometry(position);
-		if (counted != geometry) {
-			DEBUG_LOG(("Window Pos: Correcting first %1, %2, %3, %4 "
-				"to %5, %6, %7, %8"
-				).arg(geometry.x()
-				).arg(geometry.y()
-				).arg(geometry.width()
-				).arg(geometry.height()
-				).arg(counted.x()
-				).arg(counted.y()
-				).arg(counted.width()
-				).arg(counted.height()));
-			setGeometry(counted);
-		}
-	});
 }
 
 void MainWindow::positionUpdated() {
@@ -942,7 +924,7 @@ void MainWindow::updateTitle() {
 		: Dialogs::Key();
 	const auto thread = key ? key.thread() : nullptr;
 	if (!thread) {
-		setTitle((user.isEmpty() ? u"AyuGram"_q : user) + added + suffix);
+		setTitle((user.isEmpty() ? u"mTelegram"_q : user) + added + suffix);
 		return;
 	}
 	const auto history = thread->owningHistory();

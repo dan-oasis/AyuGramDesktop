@@ -11,14 +11,14 @@ add_library(tdesktop::td_ui ALIAS td_ui)
 include(lib_ui/cmake/generate_styles.cmake)
 include(cmake/generate_numbers.cmake)
 
-set(ayugram_style_files
+set(mtelegram_style_files
         ayu/ui/ayu_icons.style
         ayu/ui/ayu_styles.style
         ayu/ui/settings/ayu_settings.style
 )
 
 set(style_files
-    ${ayugram_style_files}
+    ${mtelegram_style_files}
 
     ui/td_common.style
     ui/filter_icons.style
@@ -89,6 +89,7 @@ set(style_files
     media/view/media_view.style
     overview/overview.style
     wallet/wallet.style
+    tgw/tgw.style
     window/window.style
     window/window_main_menu.style
     editor/editor.style
@@ -538,6 +539,8 @@ PRIVATE
     ui/controls/send_as_button.h
     ui/controls/send_button.cpp
     ui/controls/send_button.h
+    ui/controls/slider_tick_labels.cpp
+    ui/controls/slider_tick_labels.h
     ui/controls/stars_rating.cpp
     ui/controls/stars_rating.h
     ui/controls/subsection_tabs_slider.cpp

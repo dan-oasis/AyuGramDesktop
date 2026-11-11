@@ -36,8 +36,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <IOKit/IOKitLib.h>
 #include <IOKit/hidsystem/ev_keymap.h>
 
-// AyuGram includes
-#include "ayu/ayu_settings.h"
+// mTelegram includes
 
 
 using Platform::Q2NSString;
@@ -196,29 +195,72 @@ ApplicationDelegate *_sharedDelegate = nil;
 
 @end // @implementation ApplicationDelegate
 
+// Never NSApp's delegate: setDelegate: drops the old one's NSApp observers.
+@interface ApplicationHiddenObserver : NSObject {
+}
+
+- (void) receiveHideNote:(NSNotification*)note;
+- (void) receiveUnhideNote:(NSNotification*)note;
+
+- (rpl::producer<bool>) hiddenChanges;
+
+@end // @interface ApplicationHiddenObserver
+
+namespace {
+
+ApplicationHiddenObserver *_hiddenObserver = nil;
+
+} // namespace
+
+@implementation ApplicationHiddenObserver {
+	rpl::event_stream<bool> _hiddenChanges;
+}
+
+- (void) receiveHideNote:(NSNotification*)aNotification {
+	if (!Core::IsAppLaunched()) {
+		return;
+	}
+	Core::Sandbox::Instance().customEnterFromEventLoop([&] {
+		_hiddenChanges.fire(true);
+	});
+}
+
+- (void) receiveUnhideNote:(NSNotification*)aNotification {
+	if (!Core::IsAppLaunched()) {
+		return;
+	}
+	Core::Sandbox::Instance().customEnterFromEventLoop([&] {
+		_hiddenChanges.fire(false);
+	});
+}
+
+- (rpl::producer<bool>) hiddenChanges {
+	return _hiddenChanges.events();
+}
+
+@end // @implementation ApplicationHiddenObserver
+
 namespace Platform {
 
 void SetApplicationIcon(const QIcon &icon) {
-	const auto &settings = AyuSettings::getInstance();
-    if (settings.appIcon().isEmpty()) {
-        return;
-    }
+	NSImage *image = nil;
+	if (!icon.isNull()) {
+		auto pixmap = icon.pixmap(1024, 1024);
+		pixmap.setDevicePixelRatio(style::DevicePixelRatio());
+		image = Q2NSImage(pixmap.toImage());
+	}
+	[[NSApplication sharedApplication] setApplicationIconImage:image];
+}
 
-	const auto name = QString("AppIcon-") + settings.appIcon()[0].toUpper() + settings.appIcon().mid(1);
-    @autoreleasepool {
-        if (name == QString("AppIcon-Default")) {
-            NSApplication.sharedApplication.applicationIconImage = nil;
-            return;
-        }
-        
-        // NSString *iconPath = [NSBundle.mainBundle pathForResource:Q2NSString(name) ofType:@"icns"];
-        // NSImage *icon = [[NSImage alloc] initWithContentsOfFile:iconPath];
-		NSImage *icon = [NSBundle.mainBundle imageForResource:Q2NSString(name)];
-
-        if (icon) {
-            NSApplication.sharedApplication.applicationIconImage = icon;
-        }
-    }
+rpl::producer<bool> ApplicationHiddenValue() {
+	if (!_hiddenObserver) {
+		return rpl::single(false);
+	}
+	return rpl::single(
+		bool([NSApp isHidden])
+	) | rpl::then(
+		[_hiddenObserver hiddenChanges]
+	) | rpl::distinct_until_changed();
 }
 
 } // namespace Platform
@@ -262,6 +304,15 @@ void objc_start() {
 		addObserver: _sharedDelegate
 		selector: @selector(receiveSleepNote:)
 		name: NSWorkspaceWillSleepNotification object: NULL];
+	_hiddenObserver = [[ApplicationHiddenObserver alloc] init];
+	[[NSNotificationCenter defaultCenter]
+		addObserver: _hiddenObserver
+		selector: @selector(receiveHideNote:)
+		name: NSApplicationDidHideNotification object: NSApp];
+	[[NSNotificationCenter defaultCenter]
+		addObserver: _hiddenObserver
+		selector: @selector(receiveUnhideNote:)
+		name: NSApplicationDidUnhideNotification object: NSApp];
 
 	crl::on_main([=] { SetupDockMenu(); });
 }
@@ -277,6 +328,16 @@ namespace {
 }
 
 void objc_finish() {
+	if (_hiddenObserver) {
+		[[NSNotificationCenter defaultCenter]
+			removeObserver: _hiddenObserver
+			name: NSApplicationDidHideNotification object: NSApp];
+		[[NSNotificationCenter defaultCenter]
+			removeObserver: _hiddenObserver
+			name: NSApplicationDidUnhideNotification object: NSApp];
+		[_hiddenObserver release];
+		_hiddenObserver = nil;
+	}
 	[_sharedDelegate release];
 	_sharedDelegate = nil;
 	if (_downloadPathUrl) {

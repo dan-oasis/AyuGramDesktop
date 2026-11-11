@@ -11,17 +11,24 @@
 #include "ayu/ui/settings/ayu_builder.h"
 #include "ayu/ui/settings/settings_ayu_utils.h"
 #include "ayu/ui/settings/settings_main.h"
+#include "ayu/utils/nickname_filter.h"
 #include "base/platform/base_platform_info.h"
 #include "core/application.h"
 #include "lang/lang_text_entity.h"
 #include "platform/platform_translate_provider.h"
 #include "settings/settings_builder.h"
 #include "settings/settings_common.h"
+#include "styles/style_boxes.h"
 #include "styles/style_menu_icons.h"
 #include "styles/style_settings.h"
+#include "styles/style_widgets.h"
 #include "ui/boxes/single_choice_box.h"
+#include "ui/layers/generic_box.h"
 #include "ui/toast/toast.h"
 #include "ui/widgets/buttons.h"
+#include "ui/widgets/checkbox.h"
+#include "ui/widgets/fields/input_field.h"
+#include "ui/widgets/labels.h"
 #include "ui/wrap/vertical_layout.h"
 #include "window/window_controller.h"
 #include "window/window_session_controller.h"
@@ -33,8 +40,90 @@ using namespace AyuBuilder;
 
 namespace {
 
+void ShowNicknameFilter(not_null<Window::SessionController*> controller) {
+	controller->show(Box([=](not_null<Ui::GenericBox*> box) {
+		const auto &settings = AyuSettings::getInstance();
+		box->setTitle(tr::ayu_NicknameReplacement());
+		box->setWidth(st::boxWideWidth);
+		const auto group = std::make_shared<Ui::RadiobuttonGroup>(
+			settings.nicknameCustomFilter() ? 1 : 0);
+		box->addRow(object_ptr<Ui::Radiobutton>(
+			box,
+			group,
+			0,
+			tr::ayu_NicknameStandard(tr::now),
+			st::defaultBoxCheckbox), st::boxRowPadding);
+		box->addRow(object_ptr<Ui::FlatLabel>(
+			box,
+			tr::ayu_NicknameStandardInfo(),
+			st::boxLabel), st::boxRowPadding);
+		box->addRow(object_ptr<Ui::Radiobutton>(
+			box,
+			group,
+			1,
+			tr::ayu_NicknameCustom(tr::now),
+			st::defaultBoxCheckbox), st::boxRowPadding);
+		const auto pattern = box->addRow(object_ptr<Ui::InputField>(
+			box,
+			st::defaultInputField,
+			tr::ayu_NicknamePattern(),
+			settings.nicknameFilterPattern()), st::boxRowPadding);
+		pattern->setMaxLength(256);
+		pattern->setEnabled(settings.nicknameCustomFilter());
+		group->setChangedCallback([=](int value) {
+			pattern->setEnabled(value == 1);
+			if (value == 1) {
+				pattern->setFocusFast();
+			}
+		});
+		box->addRow(object_ptr<Ui::FlatLabel>(
+			box,
+			tr::ayu_NicknameFilterInfo(),
+			st::boxLabel), st::boxRowPadding);
+		box->addButton(tr::lng_settings_save(), [=] {
+			const auto custom = (group->current() == 1);
+			const auto expression = pattern->getLastText();
+			if (custom && !Ayu::IsValidNicknamePattern(expression)) {
+				pattern->showError();
+				controller->showToast(tr::ayu_NicknamePatternInvalid(tr::now));
+				return;
+			}
+			AyuSettings::getInstance().setNicknameFilter(custom, expression);
+			box->closeBox();
+			ShowRestartPrompt(controller);
+		});
+		box->addButton(tr::lng_cancel(), [=] { box->closeBox(); });
+	}));
+}
+
+void BuildNicknameReplacement(SectionBuilder &builder, AyuSectionBuilder &ayu) {
+	const auto controller = builder.controller();
+	ayu.addToggle({
+		.id = u"ayu/nicknameReplacement"_q,
+		.title = tr::ayu_NicknameReplacement(),
+		.getter = [] {
+			return AyuSettings::getInstance().nicknameReplacement();
+		},
+		.setter = [=](bool enabled) {
+			AyuSettings::getInstance().setNicknameReplacement(enabled);
+			if (enabled) {
+				ShowNicknameFilter(controller);
+			} else {
+				ShowRestartPrompt(controller);
+			}
+		},
+	});
+	builder.addButton({
+		.id = u"ayu/nicknameFilter"_q,
+		.title = tr::ayu_NicknameFilter(),
+		.onClick = [=] { ShowNicknameFilter(controller); },
+		.shown = AyuSettings::getInstance().nicknameReplacementValue(),
+	});
+	builder.addDividerText(tr::ayu_NicknameReplacementInfo());
+}
+
 void BuildTranslator(SectionBuilder &builder, AyuSectionBuilder &ayu) {
-	builder.addSubsectionTitle(tr::lng_translate_settings_subtitle());
+	builder.addSubsectionTitle(tr::lng_context_translate());
 
 	auto *settings = &AyuSettings::getInstance();
 
@@ -161,6 +250,7 @@ void BuildQoLToggles(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	ayu.addSectionDivider();
 
 	builder.addSubsectionTitle(tr::ayu_CategoryGeneral());
+	BuildNicknameReplacement(builder, ayu);
 
 	const auto controller = builder.controller();
 	ayu.addToggle({
@@ -274,7 +364,7 @@ void BuildQoLToggles(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 
 	ayu.addSectionDivider();
 
-	builder.addSubsectionTitle(rpl::single(QString("Webview")));
+	builder.addSubsectionTitle(tr::ayu_MiniAppsHeader());
 
 	ayu.addSettingToggle({
 		.id = u"ayu/spoofWebviewAsAndroid"_q,

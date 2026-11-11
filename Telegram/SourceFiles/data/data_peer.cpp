@@ -57,6 +57,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/ui/ayu_userpic.h"
+#include "ayu/utils/nickname_filter.h"
 
 
 namespace {
@@ -298,6 +299,9 @@ void PeerData::updateNameDelayed(
 		}
 	}
 	_name = newName;
+	_displayName = isUser()
+		? Ayu::NicknameForDisplay(_name, peerToUser(id).bare)
+		: _name;
 	invalidateEmptyUserpic();
 
 	auto flags = UpdateFlag::None | UpdateFlag::None;
@@ -1069,6 +1073,9 @@ void PeerData::fillNames() {
 	};
 
 	appendToIndex(name());
+	if (_displayName != _name) {
+		appendToIndex(_name);
+	}
 	const auto appendTranslit = !toIndexList.isEmpty()
 		&& cRussianLetters().match(toIndexList.front()).hasMatch();
 	if (appendTranslit) {
@@ -1299,6 +1306,9 @@ const QString &PeerData::topBarNameText() const {
 	if (const auto to = migrateTo()) {
 		return to->topBarNameText();
 	} else if (const auto user = asUser()) {
+		if (_displayName != _name) {
+			return _displayName;
+		}
 		if (!user->nameOrPhone.isEmpty()) {
 			return user->nameOrPhone;
 		}
@@ -1316,11 +1326,14 @@ const QString &PeerData::name() const {
 	} else if (const auto broadcast = monoforumBroadcast()) {
 		return broadcast->name();
 	}
-	return _name;
+	return _displayName;
 }
 
 const QString &PeerData::shortName() const {
 	if (const auto user = asUser()) {
+		if (_displayName != _name) {
+			return _displayName;
+		}
 		return user->firstName.isEmpty() ? user->lastName : user->firstName;
 	} else if (const auto to = migrateTo()) {
 		return to->shortName();

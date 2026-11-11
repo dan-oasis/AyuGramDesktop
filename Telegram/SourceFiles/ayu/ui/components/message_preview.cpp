@@ -16,6 +16,7 @@
 #include "history/admin_log/history_admin_log_item.h"
 #include "history/view/history_view_element.h"
 #include "history/view/history_view_fake_items.h"
+#include "lang/lang_keys.h"
 #include "main/main_session.h"
 #include "styles/style_chat.h"
 #include "styles/style_settings.h"
@@ -71,22 +72,22 @@ MessagePreview::MessagePreview(
 		history,
 		history->session().userPeerId(),
 		FullMsgId(),
-		u"Update wehn?"_q);
+		tr::ayu_MessagePreviewReply(tr::now));
 
-	const auto ayugramUser = HistoryView::GenerateUser(
+	const auto mtelegramUser = HistoryView::GenerateUser(
 		history,
-		u"AyuGram Releases"_q);
+		u"mTelegram"_q);
 	const auto messageItem = history->addNewLocalMessage({
 		.id = history->nextNonHistoryEntryId(),
 		.flags = (MessageFlag::FakeHistoryItem
 			| MessageFlag::HasFromId
 			| MessageFlag::HasReplyInfo),
-		.from = ayugramUser,
+		.from = mtelegramUser,
 		.replyTo = FullReplyTo{
 			.messageId = _state->reply->data()->fullId(),
 		},
 		.date = base::unixtime::now() - 3600,
-	}, TextWithEntities{ u"You need to go outside and touch some grass..."_q },
+	}, TextWithEntities{ tr::ayu_MessagePreviewText(tr::now) },
 	MTP_messageMediaEmpty());
 
 	messageItem->setDeleted();
@@ -99,7 +100,7 @@ MessagePreview::MessagePreview(
 	auto edition = HistoryMessageEdition();
 	edition.editDate = base::unixtime::now();
 	edition.textWithEntities = TextWithEntities{
-		u"You need to go outside and touch some grass..."_q,
+		tr::ayu_MessagePreviewText(tr::now),
 	};
 	edition.useSameViews = true;
 	edition.useSameForwards = true;

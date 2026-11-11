@@ -9,6 +9,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "mtproto/details/mtproto_abstract_socket.h"
 #include "mtproto/details/mtproto_web_proxy_socket.h"
+#ifdef MTELEGRAM_HAS_WSS
+#include "mtproto/details/mtproto_wss_socket.h"
+#endif
 #include "base/bytes.h"
 #include "base/openssl_help.h"
 #include "base/random.h"
@@ -250,14 +253,17 @@ auto TcpConnection::Protocol::Create(bytes::const_span secret)
 TcpConnection::TcpConnection(
 	not_null<Instance*> instance,
 	QThread *thread,
-	const ProxyData &proxy)
+	const ProxyData &proxy,
+	bool websocket)
 : AbstractConnection(thread, proxy)
 , _instance(instance)
+, _websocket(websocket)
 , _checkNonce(base::RandomValue<MTPint128>()) {
 }
 
 ConnectionPointer TcpConnection::clone(const ProxyData &proxy) {
-	return ConnectionPointer::New<TcpConnection>(_instance, thread(), proxy);
+	return ConnectionPointer::New<TcpConnection>(
+		_instance, thread(), proxy, _websocket);
 }
 
 void TcpConnection::ensureAvailableInBuffer(int amount) {
@@ -484,7 +490,9 @@ bytes::const_span TcpConnection::prepareConnectionStartPrefix(
 
 	// write protocol and dc ids
 	qToUnaligned(_protocol->id(), nonce.data() + 56);
-	qToUnaligned(_protocolDcId, nonce.data() + 60);
+	if (!_websocket) {
+		qToUnaligned(_protocolDcId, nonce.data() + 60);
+	}
 
 	bytes::copy(buffer, nonce.subspan(0, 56));
 	aesCtrEncrypt(nonce, _sendKey, &_sendState);
@@ -532,13 +540,20 @@ void TcpConnection::connectToServer(
 		_port = port;
 		_protocol = Protocol::Create(secret);
 	}
-	_socket = (_proxy.type == ProxyData::Type::Web)
+#ifdef MTELEGRAM_HAS_WSS
+	if (_websocket) {
+		_socket = std::make_unique<WssSocket>(thread());
+	}
+#endif
+	if (!_socket) {
+		_socket = (_proxy.type == ProxyData::Type::Web)
 		? std::make_unique<WebProxySocket>(thread(), _proxy)
 		: AbstractSocket::Create(
 			thread(),
 			secret,
 			ToNetworkProxy(_proxy),
 			protocolForFiles);
+	}
 	_protocolDcId = protocolDcId;
 
 	const auto postfix = _socket->debugPostfix();
@@ -649,6 +664,9 @@ QString TcpConnection::transport() const {
 	if (!isConnected()) {
 		return QString();
 	}
+	if (_websocket) {
+		return u"WSS"_q;
+	}
 	auto result = u"TCP"_q;
 	if (qthelp::is_ipv6(_address)) {
 		result += u"/IPv6"_q;
@@ -657,6 +675,9 @@ QString TcpConnection::transport() const {
 }
 
 QString TcpConnection::tag() const {
+	if (_websocket) {
+		return u"WSS"_q;
+	}
 	auto result = u"TCP"_q;
 	if (qthelp::is_ipv6(_address)) {
 		result += u"/IPv6"_q;

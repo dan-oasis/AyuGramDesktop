@@ -30,9 +30,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QSvgRenderer>
 #include <QBuffer>
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
-#include "ayu/ui/ayu_logo.h"
 #include "styles/style_ayu_icons.h"
 
 
@@ -117,16 +116,6 @@ bool DarkTasbarValueValid/* = false*/;
 	static auto ScaledLogoDark = base::flat_map<int, QImage>();
 	static auto ScaledLogoLight = base::flat_map<int, QImage>();
 
-	static auto lastUsedIcon = AyuAssets::currentAppLogoName();
-
-	if (lastUsedIcon != AyuAssets::currentAppLogoName()) {
-		lastUsedIcon = AyuAssets::currentAppLogoName();
-		ScaledLogo = base::flat_map<int, QImage>();
-		ScaledLogoNoMargin = base::flat_map<int, QImage>();
-		ScaledLogoDark = base::flat_map<int, QImage>();
-		ScaledLogoLight = base::flat_map<int, QImage>();
-	}
-
 	const auto &settings = AyuSettings::getInstance();
 	if (settings.hideNotificationBadge()) {
 		args.count = 0;
@@ -167,7 +156,7 @@ bool DarkTasbarValueValid/* = false*/;
 		return Window::WithSmallCounter(std::move(result), std::move(args));
 	}
 	QPainter p(&result);
-	PainterHighQualityEnabler hq(p); // AyuGram: fix for lq icons
+	PainterHighQualityEnabler hq(p); // mTelegram: fix for lq icons
 	const auto half = args.size / 2;
 	args.size = half;
 	p.drawPixmap(

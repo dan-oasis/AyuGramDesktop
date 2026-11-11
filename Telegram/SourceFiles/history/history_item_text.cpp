@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_item_text.h"
 
+#include "window/mtelegram_tools.h"
+
 #include "data/data_forum_topic.h"
 #include "data/data_groups.h"
 #include "data/data_media_types.h"
@@ -29,6 +31,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "api/api_transcribes.h"
+#include "ayu/utils/nickname_filter.h"
 
 
 namespace {
@@ -332,7 +335,7 @@ QString ReplySenderNameForSelectedCopy(
 			}
 		}
 		if (!fields.externalSenderName.isEmpty()) {
-			return fields.externalSenderName;
+			return Ayu::NicknameForDisplay(fields.externalSenderName);
 		}
 	} else if (item->Has<HistoryMessageForwarded>()) {
 		const auto forwarded = message->Get<HistoryMessageForwarded>();
@@ -340,7 +343,7 @@ QString ReplySenderNameForSelectedCopy(
 			if (forwarded->originalSender) {
 				return forwarded->originalSender->name();
 			} else if (forwarded->originalHiddenSenderInfo) {
-				return forwarded->originalHiddenSenderInfo->name;
+				return forwarded->originalHiddenSenderInfo->displayName;
 			}
 		}
 	}
@@ -479,7 +482,7 @@ std::optional<SelectedCopyReplyContext> ReplyContextForSelectedCopy(
 		auto name = sender
 			? sender->name()
 			: (forwarded->originalHiddenSenderInfo
-				? forwarded->originalHiddenSenderInfo->name
+				? forwarded->originalHiddenSenderInfo->displayName
 				: QString());
 		if (!name.isEmpty()) {
 			return forwarded->originalPostAuthor.isEmpty()
@@ -489,7 +492,7 @@ std::optional<SelectedCopyReplyContext> ReplyContextForSelectedCopy(
 					lt_channel,
 					name,
 					lt_user,
-					forwarded->originalPostAuthor);
+					Ayu::NicknameForDisplay(forwarded->originalPostAuthor));
 		}
 	}
 	return item->author()->name();
@@ -785,6 +788,7 @@ HistorySelectedTextParts HistorySelectedItemWrappedText(
 HistorySelectedTextParts HistorySelectedItemsTextParts(
 		const std::vector<HistorySelectedTextEntry> &entries,
 		bool richContext) {
+	richContext = richContext || MTelegram::Enabled(MTelegram::kFormattedCopy);
 	if (!richContext && entries.size() == 1) {
 		const auto &part = entries.front();
 		if (part.group) {

@@ -42,6 +42,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/ayu_settings.h"
+#include "ayu/utils/nickname_filter.h"
 
 
 namespace HistoryView {
@@ -595,14 +596,15 @@ QString Reply::senderName(
 	if (const auto peer = sender(view, data)) {
 		return senderName(peer, shorten);
 	} else if (!data->resolvedMessage) {
-		return data->fields().externalSenderName;
+		const auto &name = data->fields().externalSenderName;
+		return name.isEmpty() ? QString() : Ayu::NicknameForDisplay(name);
 	} else if (view->data()->Has<HistoryMessageForwarded>()) {
 		// Forward of a reply. Show reply-to original sender.
 		const auto forwarded
 			= data->resolvedMessage->Get<HistoryMessageForwarded>();
 		if (forwarded) {
 			Assert(forwarded->originalHiddenSenderInfo != nullptr);
-			return forwarded->originalHiddenSenderInfo->name;
+			return forwarded->originalHiddenSenderInfo->displayName;
 		}
 	}
 	return QString();
@@ -687,7 +689,7 @@ void Reply::updateName(
 			st::historyReplyForward
 		).append(forwarded->originalSender
 			? forwarded->originalSender->name()
-			: forwarded->originalHiddenSenderInfo->name);
+			: forwarded->originalHiddenSenderInfo->displayName);
 	}
 	if (!viaBotUsername.isEmpty()) {
 		nameFull.append(u" @"_q).append(viaBotUsername);

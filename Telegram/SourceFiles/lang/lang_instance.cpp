@@ -15,8 +15,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_tag.h" // kTextCommandLangTag.
 #include "base/platform/base_platform_info.h"
 #include "base/qthelp_regex.h"
+#include "test/test_l10n_seams.h"
 
 #include "lang_auto_counts.h" // kKeysCount, kTagsCount.
+
+// mTelegram includes
+#include "ayu/ayu_lang.h"
+
 
 namespace Lang {
 namespace {
@@ -301,6 +306,9 @@ void Instance::reset(const Language &data) {
 	ranges::fill(_nonDefaultSet, 0);
 	updateChoosingStickerReplacement();
 
+	if (!_derived) {
+		AyuLanguage::applyBuiltIn(*this);
+	}
 	_idChanges.fire_copy(_id);
 }
 
@@ -547,6 +555,9 @@ void Instance::fillFromSerialized(
 	updatePluralRules();
 	updateChoosingStickerReplacement();
 
+	if (!_derived) {
+		AyuLanguage::applyBuiltIn(*this);
+	}
 	_idChanges.fire_copy(_id);
 }
 
@@ -695,8 +706,10 @@ void Instance::applyDifferenceToMe(
 		});
 	}
 	if (!_derived) {
+		AyuLanguage::applyBuiltIn(*this);
 		_updated.fire({});
 	} else {
+		AyuLanguage::applyBuiltIn(*_derived);
 		_derived->_updated.fire({});
 	}
 }
@@ -805,6 +818,7 @@ QString GetNonDefaultValue(const QByteArray &key) {
 namespace details {
 
 QString Current(ushort key) {
+	Test::NoteLangRead(key);
 	return GetInstance().getValue(key);
 }
 

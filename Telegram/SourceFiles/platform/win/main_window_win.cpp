@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "platform/win/main_window_win.h"
 
+#include "../../../Resources/winrc/branding.h"
+
 #include "platform/platform_specific.h"
 #include "platform/platform_notifications_manager.h"
 #include "platform/win/tray_win.h"
@@ -21,6 +23,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/platform/win/base_windows_wrl.h"
 #include "base/platform/base_platform_info.h"
 #include "core/application.h"
+#include "core/launcher.h"
 #include "core/sandbox.h"
 #include "lang/lang_keys.h"
 #include "storage/localstorage.h"
@@ -47,9 +50,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <Windowsx.h>
 #include <VersionHelpers.h>
 
-// AyuGram includes
+// mTelegram includes
 #include "ayu/ayu_settings.h"
-#include "ayu/ui/ayu_logo.h"
 #include "platform/win/windows_app_user_model_id.h"
 #include <QtCore/QDir>
 #include <propkey.h>
@@ -113,7 +115,7 @@ private:
 	return nullptr;
 }
 
-void UpdateTaskbarRelaunchIcon(HWND hWnd) {
+void SetTaskbarIdentity(HWND hWnd) {
 	auto propertyStore = ComPtr<IPropertyStore>();
 	auto hr = SHGetPropertyStoreForWindow(
 		hWnd,
@@ -134,11 +136,21 @@ void UpdateTaskbarRelaunchIcon(HWND hWnd) {
 		PropVariantClear(&prop);
 	};
 
-	setString(AppUserModelId::Key(), AppUserModelId::Id());
+	const auto executable = QDir::toNativeSeparators(
+		QCoreApplication::applicationFilePath()).toStdWString();
+	auto command = L'"' + executable + L'"';
+	if (Core::Launcher::Instance().customWorkingDir()) {
+		command += L" -workdir " + (L'"' + cWorkingDir().toStdWString() + L'"');
+	}
+	if (cDataFile() != u"data"_q) {
+		command += L" -key " + (L'"' + cDataFile().toStdWString() + L'"');
+	}
+	setString(PKEY_AppUserModel_RelaunchCommand, command);
 	setString(
-		PKEY_AppUserModel_RelaunchIconResource,
-		QDir::toNativeSeparators(AyuAssets::appIcoPath()).toStdWString()
-			+ L",0");
+		PKEY_AppUserModel_RelaunchDisplayNameResource,
+		L"@" + executable + L",-" + std::to_wstring(IDS_APP_DISPLAY_NAME));
+	setString(PKEY_AppUserModel_RelaunchIconResource, executable + L",0");
+	setString(AppUserModelId::Key(), AppUserModelId::Id());
 	propertyStore->Commit();
 }
 
@@ -650,7 +662,6 @@ void MainWindow::updateTaskbarAndIconCounters() {
 		GetSystemMetrics(SM_CXICON),
 		GetSystemMetrics(SM_CYICON));
 	const auto supportMode = session && session->supportMode();
-	UpdateTaskbarRelaunchIcon(_hWnd);
 
 	auto iconSmallPixmap16 = Tray::IconWithCounter(
 		Tray::CounterLayerArgs(16, counter, muted),
@@ -709,6 +720,7 @@ void MainWindow::initHook() {
 		return;
 	}
 
+	SetTaskbarIdentity(_hWnd);
 	WTSRegisterSessionNotification(_hWnd, NOTIFY_FOR_THIS_SESSION);
 
 	using namespace base::Platform;

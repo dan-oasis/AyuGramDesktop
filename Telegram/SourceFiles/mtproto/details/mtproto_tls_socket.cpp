@@ -9,19 +9,27 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "mtproto/details/mtproto_tcp_socket.h"
 #include "base/openssl_help.h"
+#include "base/options.h"
 #include "base/bytes.h"
 #include "base/invoke_queued.h"
 #include "base/random.h"
 #include "base/unixtime.h"
 
+#include <QtCore/QHash>
+#include <QtCore/QMutex>
 #include <QtCore/QtEndian>
+#include <QtCore/QTimer>
 #include <range/v3/algorithm/reverse.hpp>
 
 namespace MTP::details {
+
+const char kOptionAdvancedFakeTls[] = "advanced-fake-tls";
+const char kOptionRotateFakeTls[] = "rotate-fake-tls";
+
 namespace {
 
 constexpr auto kMaxGrease = 8;
-constexpr auto kClientHelloLimit = 2048;
+constexpr auto kClientHelloLimit = 4096;
 constexpr auto kHelloDigestLength = 32;
 constexpr auto kLengthSize = sizeof(uint16);
 constexpr auto kMaxServerHelloLength = 65536;
@@ -30,13 +38,58 @@ const auto kServerHelloPart3 = qstr("\x14\x03\x03\x00\x01\x01\x17\x03\x03");
 constexpr auto kServerHelloDigestPosition = 11;
 const auto kServerHeader = qstr("\x17\x03\x03");
 constexpr auto kClientPartSize = 2878;
+constexpr auto kAdvancedClientPartSize = 1380;
+constexpr auto kClientHelloSplit = 256;
+
+base::options::toggle OptionAdvancedFakeTls({
+	.id = kOptionAdvancedFakeTls,
+	.name = "Advanced MTProxy FakeTLS",
+	.description = "Validate and split the FakeTLS hello and use smaller TLS records.",
+	.restartRequired = true,
+});
 const auto kClientPrefix = qstr("\x14\x03\x03\x00\x01\x01");
 const auto kClientHeader = qstr("\x17\x03\x03");
+
+base::options::toggle OptionRotateFakeTls({
+	.id = kOptionRotateFakeTls,
+	.name = "Rotate FakeTLS profiles",
+	.description = "Try another TLS profile when an advanced FakeTLS hello gets no response.",
+	.restartRequired = true,
+});
+
+enum class FakeTlsProfile {
+	Legacy,
+	Yandex,
+	FirefoxAndroid,
+	Firefox,
+	AndroidOkHttp,
+};
+
+constexpr auto kFakeTlsProfiles = std::array{
+	FakeTlsProfile::Yandex,
+	FakeTlsProfile::FirefoxAndroid,
+	FakeTlsProfile::Firefox,
+	FakeTlsProfile::AndroidOkHttp,
+};
+
+auto FakeTlsProfileForEndpoint(const QString &endpoint, bool advance) {
+	static auto mutex = QMutex();
+	static auto offsets = QHash<QString, std::size_t>();
+	const auto lock = QMutexLocker(&mutex);
+	if (advance && !offsets.contains(endpoint) && offsets.size() >= 128) {
+		offsets.clear();
+	}
+	if (advance) {
+		auto &offset = offsets[endpoint];
+		offset = (offset + 1) % kFakeTlsProfiles.size();
+	}
+	return kFakeTlsProfiles[offsets.value(endpoint)];
+}
 
 using BigNum = openssl::BigNum;
 using BigNumContext = openssl::Context;
 
-[[nodiscard]] MTPTlsClientHello PrepareClientHelloRules() {
+[[nodiscard]] MTPTlsClientHello PrepareClientHelloRules(FakeTlsProfile profile) {
 	using Scope = QVector<MTPTlsBlock>;
 	using Permutation = std::vector<Scope>;
 	using StackElement = std::variant<Scope, Permutation>;
@@ -122,6 +175,169 @@ using BigNumContext = openssl::Context;
 	};
 
 	stack.emplace_back(Scope());
+
+	// Firefox and OkHttp recipes adapted from ZaStoGram tgnet, GPL-2.0-or-later.
+	// Copyright Nikolai Kudashov, 2015-2018 (tgnet).
+	if (profile == FakeTlsProfile::Firefox) {
+		S(QByteArray("\x16\x03\x01", 3));
+		OpenScope();
+		S(QByteArray("\x01\x00", 2));
+		OpenScope();
+		S(QByteArray("\x03\x03", 2));
+		Z(32);
+		S(QByteArray("\x20", 1));
+		R(32);
+		S(QByteArray("\x00\x22", 2));
+		G(0);
+		S(QByteArray("\x13\x01\x13\x03\x13\x02\xc0\x2b\xc0\x2f\xcc\xa9\xcc\xa8\xc0\x2c\xc0\x30\xc0\x0a\xc0\x13\xc0\x14\x00\x9c\x00\x9d\x00\x2f\x00\x35", 32));
+		S(QByteArray("\x01\x00", 2));
+		OpenScope();
+		S(QByteArray("\x00\x00", 2));
+		OpenScope();
+		OpenScope();
+		S(QByteArray("\x00", 1));
+		OpenScope();
+		D();
+		CloseScope();
+		CloseScope();
+		CloseScope();
+		S(QByteArray("\x00\x17\x00\x00", 4));
+		S(QByteArray("\xff\x01\x00\x01\x00", 5));
+		S(QByteArray("\x00\x0a\x00\x10\x00\x0e", 6));
+		G(2);
+		S(QByteArray("\x00\x1d\x00\x17\x00\x18\x00\x19\x01\x00\x01\x01", 12));
+		S(QByteArray("\x00\x0b\x00\x02\x01\x00", 6));
+		S(QByteArray("\x00\x23\x00\x00", 4));
+		S(QByteArray("\x00\x10\x00\x0e\x00\x0c\x02\x68\x32\x08\x68\x74\x74\x70\x2f\x31\x2e\x31", 18));
+		S(QByteArray("\x00\x05\x00\x05\x01\x00\x00\x00\x00", 9));
+		S(QByteArray("\x00\x22\x00\x0a\x00\x08\x04\x03\x05\x03\x06\x03\x02\x03", 14));
+		S(QByteArray("\x00\x33\x05\x2f\x05\x2d", 6));
+		S(QByteArray("\x11\xec\x04\xc0", 4));
+		M();
+		K();
+		S(QByteArray("\x00\x1d\x00\x20", 4));
+		K();
+		S(QByteArray("\x00\x17\x00\x41", 4));
+		R(65);
+		S(QByteArray("\x00\x2b\x00\x07\x06", 5));
+		G(4);
+		S(QByteArray("\x03\x04\x03\x03", 4));
+		S(QByteArray("\x00\x0d\x00\x18\x00\x16\x04\x03\x05\x03\x06\x03\x08\x04\x08\x05\x08\x06\x04\x01\x05\x01\x06\x01\x02\x03\x02\x01", 28));
+		S(QByteArray("\x00\x2d\x00\x02\x01\x01", 6));
+		S(QByteArray("\x00\x1c\x00\x02\x40\x01", 6));
+		S(QByteArray("\x00\x1b\x00\x07\x06\x00\x01\x00\x02\x00\x03", 11));
+		S(QByteArray("\xfe\x0d\x01\x19", 4));
+		S(QByteArray("\x00\x00\x01\x00\x01", 5));
+		R(1);
+		S(QByteArray("\x00\x20", 2));
+		K();
+		S(QByteArray("\x00\xef", 2));
+		R(239);
+		P();
+		CloseScope();
+		CloseScope();
+		CloseScope();
+		return MTP_tlsClientHello(MTP_vector<MTPTlsBlock>(Finish()));
+	}
+	if (profile == FakeTlsProfile::FirefoxAndroid) {
+		S(QByteArray("\x16\x03\x01", 3));
+		OpenScope();
+		S(QByteArray("\x01\x00", 2));
+		OpenScope();
+		S(QByteArray("\x03\x03", 2));
+		Z(32);
+		S(QByteArray("\x20", 1));
+		R(32);
+		S(QByteArray("\x00\x22", 2));
+		S(QByteArray("\x13\x01\x13\x03\x13\x02\xc0\x2b\xc0\x2f\xcc\xa9\xcc\xa8\xc0\x2c\xc0\x30\xc0\x0a\xc0\x09\xc0\x13\xc0\x14\x00\x9c\x00\x9d\x00\x2f\x00\x35", 34));
+		S(QByteArray("\x01\x00", 2));
+		OpenScope();
+		S(QByteArray("\x00\x00", 2));
+		OpenScope();
+		OpenScope();
+		S(QByteArray("\x00", 1));
+		OpenScope();
+		D();
+		CloseScope();
+		CloseScope();
+		CloseScope();
+		S(QByteArray("\x00\x17\x00\x00", 4));
+		S(QByteArray("\xff\x01\x00\x01\x00", 5));
+		S(QByteArray("\x00\x0a\x00\x10\x00\x0e\x11\xec\x00\x1d\x00\x17\x00\x18\x00\x19\x01\x00\x01\x01", 20));
+		S(QByteArray("\x00\x0b\x00\x02\x01\x00", 6));
+		S(QByteArray("\x00\x10\x00\x0e\x00\x0c\x02\x68\x32\x08\x68\x74\x74\x70\x2f\x31\x2e\x31", 18));
+		S(QByteArray("\x00\x05\x00\x05\x01\x00\x00\x00\x00", 9));
+		S(QByteArray("\x00\x22\x00\x0a\x00\x08\x04\x03\x05\x03\x06\x03\x02\x03", 14));
+		S(QByteArray("\x00\x33\x05\x2f\x05\x2d", 6));
+		S(QByteArray("\x11\xec\x04\xc0", 4));
+		M();
+		K();
+		S(QByteArray("\x00\x1d\x00\x20", 4));
+		K();
+		S(QByteArray("\x00\x17\x00\x41", 4));
+		R(65);
+		S(QByteArray("\x00\x2b\x00\x05\x04\x03\x04\x03\x03", 9));
+		S(QByteArray("\x00\x0d\x00\x18\x00\x16\x04\x03\x05\x03\x06\x03\x08\x04\x08\x05\x08\x06\x04\x01\x05\x01\x06\x01\x02\x03\x02\x01", 28));
+		S(QByteArray("\x00\x2d\x00\x02\x01\x01", 6));
+		S(QByteArray("\x00\x1c\x00\x02\x40\x01", 6));
+		S(QByteArray("\x00\x1b\x00\x07\x06\x00\x01\x00\x02\x00\x03", 11));
+		S(QByteArray("\xfe\x0d\x01\xb9", 4));
+		S(QByteArray("\x00\x00\x01\x00\x01", 5));
+		R(1);
+		S(QByteArray("\x00\x20", 2));
+		K();
+		S(QByteArray("\x01\x8f", 2));
+		R(399);
+		P();
+		CloseScope();
+		CloseScope();
+		CloseScope();
+		return MTP_tlsClientHello(MTP_vector<MTPTlsBlock>(Finish()));
+	}
+	if (profile == FakeTlsProfile::AndroidOkHttp) {
+		S(QByteArray("\x16\x03\x01", 3));
+		OpenScope();
+		S(QByteArray("\x01\x00", 2));
+		OpenScope();
+		S(QByteArray("\x03\x03", 2));
+		Z(32);
+		S(QByteArray("\x20", 1));
+		R(32);
+		S(QByteArray("\x00\x20", 2));
+		G(0);
+		S(QByteArray("\x13\x01\x13\x02\x13\x03\xc0\x2b\xc0\x2f\xc0\x2c\xc0\x30\xcc\xa9\xcc\xa8\xc0\x13\xc0\x14\x00\x9c\x00\x9d\x00\x2f\x00\x35\x01\x00", 32));
+		OpenScope();
+		G(2);
+		S(QByteArray("\x00\x00", 2));
+		S(QByteArray("\x00\x00", 2));
+		OpenScope();
+		OpenScope();
+		S(QByteArray("\x00", 1));
+		OpenScope();
+		D();
+		CloseScope();
+		CloseScope();
+		CloseScope();
+		S(QByteArray("\x00\x0a\x00\x0a\x00\x08", 6));
+		G(4);
+		S(QByteArray("\x00\x1d\x00\x17\x00\x18", 6));
+		S(QByteArray("\x00\x0b\x00\x02\x01\x00", 6));
+		S(QByteArray("\x00\x0d\x00\x0e\x00\x0c\x04\x03\x05\x03\x04\x01\x05\x01\x02\x01\x02\x03", 18));
+		S(QByteArray("\x00\x10\x00\x0e\x00\x0c\x02\x68\x32\x08\x68\x74\x74\x70\x2f\x31\x2e\x31", 18));
+		S(QByteArray("\x00\x2b\x00\x07\x06", 5));
+		G(6);
+		S(QByteArray("\x03\x04\x03\x03", 4));
+		S(QByteArray("\x00\x2d\x00\x02\x01\x01", 6));
+		S(QByteArray("\x00\x33\x00\x26\x00\x24\x00\x1d\x00\x20", 10));
+		K();
+		G(3);
+		S(QByteArray("\x00\x01\x00", 3));
+		P();
+		CloseScope();
+		CloseScope();
+		CloseScope();
+		return MTP_tlsClientHello(MTP_vector<MTPTlsBlock>(Finish()));
+	}
 
 	S("\x16\x03\x01"_q);
 	OpenScope();
@@ -222,7 +438,9 @@ using BigNumContext = openssl::Context;
 		}
 	} ClosePermutation();
 	G(3);
-	S("\x00\x01\x00"_q);
+	S(profile == FakeTlsProfile::Yandex
+		? "\x00\x00"_q
+		: "\x00\x01\x00"_q);
 	P();
 	CloseScope();
 	CloseScope();
@@ -594,6 +812,75 @@ ClientHello Generator::take() {
 	return qFromBigEndian<uint16>(storage.data());
 }
 
+[[nodiscard]] bool ValidateRelayHello(
+		const QByteArray &hello,
+		bytes::const_span domain) {
+	const auto read16 = [&](qsizetype offset) {
+		return qFromBigEndian<uint16>(hello.data() + offset);
+	};
+	if (hello.size() < 517
+		|| hello.size() > 4096
+		|| uchar(hello[0]) != 0x16
+		|| uchar(hello[5]) != 0x01
+		|| read16(3) != hello.size() - 5
+		|| uchar(hello[6]) != 0
+		|| read16(7) != hello.size() - 9
+		|| uchar(hello[43]) != 32) {
+		return false;
+	}
+	const auto cipherOffset = qsizetype(76);
+	const auto cipherSize = read16(cipherOffset);
+	const auto cipherEnd = cipherOffset + 2 + cipherSize;
+	if (cipherSize < 2 || (cipherSize % 2) || cipherEnd >= hello.size()) {
+		return false;
+	}
+	auto cipher = cipherOffset + 2;
+	while (cipher < cipherEnd) {
+		const auto code = read16(cipher);
+		if ((code & 0x0F0F) != 0x0A0A || (code >> 8) != (code & 0xFF)) {
+			break;
+		}
+		cipher += 2;
+	}
+	if (cipher == cipherEnd
+		|| read16(cipher) < 0x1301
+		|| read16(cipher) > 0x1303) {
+		return false;
+	}
+
+	auto offset = cipherEnd + 1 + uchar(hello[cipherEnd]);
+	if (offset + 2 > hello.size()
+		|| read16(offset) != hello.size() - offset - 2) {
+		return false;
+	}
+	offset += 2;
+	auto seenName = false;
+	while (offset + 4 <= hello.size()) {
+		const auto type = read16(offset);
+		const auto size = read16(offset + 2);
+		offset += 4;
+		if (size > hello.size() - offset) {
+			return false;
+		}
+		if (type == 0) {
+			if (seenName
+				|| size < 5
+				|| read16(offset) != size - 2
+				|| hello[offset + 2] != 0
+				|| read16(offset + 3) != size - 5
+				|| std::size_t(size - 5) != domain.size()
+				|| bytes::compare(
+					bytes::make_span(hello.data() + offset + 5, size - 5),
+					domain)) {
+				return false;
+			}
+			seenName = true;
+		}
+		offset += size;
+	}
+	return seenName && offset == hello.size();
+}
+
 } // namespace
 
 TlsSocket::TlsSocket(
@@ -652,23 +939,74 @@ void TlsSocket::plainConnected() {
 		return;
 	}
 
-	static const auto kClientHelloRules = PrepareClientHelloRules();
+	const auto profile = !OptionAdvancedFakeTls.value()
+		? FakeTlsProfile::Legacy
+		: OptionRotateFakeTls.value()
+		? FakeTlsProfileForEndpoint(_rotationKey, false)
+		: FakeTlsProfile::Yandex;
+	static const auto rules = std::array{
+		PrepareClientHelloRules(FakeTlsProfile::Legacy),
+		PrepareClientHelloRules(FakeTlsProfile::Yandex),
+		PrepareClientHelloRules(FakeTlsProfile::FirefoxAndroid),
+		PrepareClientHelloRules(FakeTlsProfile::Firefox),
+		PrepareClientHelloRules(FakeTlsProfile::AndroidOkHttp),
+	};
 	const auto hello = PrepareClientHello(
-		kClientHelloRules,
+		rules[static_cast<std::size_t>(profile)],
 		domainFromSecret(),
 		keyFromSecret());
-	if (hello.data.isEmpty()) {
+	if (hello.data.isEmpty()
+		|| (OptionAdvancedFakeTls.value()
+			&& !ValidateRelayHello(hello.data, domainFromSecret()))) {
 		logError(888, "Could not generate Client Hello.");
 		_state = State::Error;
 		_error.fire({});
 	} else {
 		_state = State::WaitingHello;
 		_incoming = hello.digest;
-		_socket.write(hello.data);
+		sendClientHello(hello.data);
+	}
+}
+
+void TlsSocket::sendClientHello(const QByteArray &hello) {
+	if (!OptionAdvancedFakeTls.value()) {
+		if (_socket.write(hello) != hello.size()) {
+			handleError();
+		}
+		return;
+	}
+	if (_socket.write(hello.constData(), kClientHelloSplit)
+		!= kClientHelloSplit) {
+		handleError();
+		return;
+	}
+	_socket.flush();
+	QTimer::singleShot(15, this, [=, tail = hello.mid(kClientHelloSplit)] {
+		if (_state == State::WaitingHello) {
+			if (_socket.write(tail) != tail.size()) {
+				handleError();
+			} else {
+				_clientHelloQueued = true;
+			}
+		}
+	});
+}
+
+void TlsSocket::rotateProfileIfUnanswered() {
+	if (OptionAdvancedFakeTls.value()
+		&& OptionRotateFakeTls.value()
+		&& _state == State::WaitingHello
+		&& _clientHelloQueued
+		&& _incoming.size() == kHelloDigestLength
+		&& !_socket.bytesAvailable()) {
+		_clientHelloQueued = false;
+		FakeTlsProfileForEndpoint(_rotationKey, true);
 	}
 }
 
 void TlsSocket::plainDisconnected() {
+	rotateProfileIfUnanswered();
+	_clientHelloQueued = false;
 	_state = State::NotConnected;
 	_incoming = QByteArray();
 	_serverHelloLength = 0;
@@ -853,6 +1191,7 @@ void TlsSocket::connectToHost(const QString &address, int port) {
 	Expects(_state == State::NotConnected);
 
 	_state = State::Connecting;
+	_rotationKey = u"%1:%2"_q.arg(address.toLower()).arg(port);
 	_socket.connectToHost(address, port);
 }
 
@@ -861,6 +1200,7 @@ bool TlsSocket::isGoodStartNonce(bytes::const_span nonce) {
 }
 
 void TlsSocket::timedOut() {
+	rotateProfileIfUnanswered();
 	_syncTimeRequests.fire({});
 }
 
@@ -917,9 +1257,12 @@ void TlsSocket::write(bytes::const_span prefix, bytes::const_span buffer) {
 	if (!prefix.empty()) {
 		_socket.write(kClientPrefix.data(), kClientPrefix.size());
 	}
+	const auto partSize = OptionAdvancedFakeTls.value()
+		? kAdvancedClientPartSize
+		: kClientPartSize;
 	while (!buffer.empty()) {
 		const auto write = std::min(
-			kClientPartSize - prefix.size(),
+			partSize - prefix.size(),
 			buffer.size());
 		_socket.write(kClientHeader.data(), kClientHeader.size());
 		const auto size = qToBigEndian(uint16(prefix.size() + write));
@@ -946,6 +1289,7 @@ QString TlsSocket::debugPostfix() const {
 }
 
 void TlsSocket::handleError(int errorCode) {
+	rotateProfileIfUnanswered();
 	if (_state != State::Connected) {
 		_syncTimeRequests.fire({});
 	}

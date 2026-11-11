@@ -47,6 +47,9 @@ public:
 		const QMap<QString, QString> &fields);
 
 	[[nodiscard]] static ProxyData ProxyFromLink(const QString &link);
+	[[nodiscard]] static QString ProxyLink(
+		not_null<Main::Account*> account,
+		const ProxyData &proxy);
 
 	static object_ptr<Ui::BoxContent> CreateOwningBox(
 		not_null<Main::Account*> account,
@@ -74,7 +77,6 @@ public:
 		bool selected = false;
 		bool deleted = false;
 		bool supportsShare = false;
-		bool supportsCalls = false;
 		bool web = false;
 		bool canOpenBrowser = false;
 		ItemState state = ItemState::Checking;
@@ -91,7 +93,6 @@ public:
 	object_ptr<Ui::BoxContent> editItemBox(int id);
 	object_ptr<Ui::BoxContent> addNewItemBox();
 	bool setProxySettings(ProxyData::Settings value);
-	void setProxyForCalls(bool enabled);
 	void setProxyRotationEnabled(bool enabled);
 	void setProxyRotationTimeout(int value);
 	void setTryIPv6(bool enabled);
